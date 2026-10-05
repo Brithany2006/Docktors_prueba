@@ -1,0 +1,207 @@
+﻿@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+    <h4 class="text-lg font-bold text-gray-800 flex items-center mb-4">
+        <i class="fa-solid fa-robot text-turquesa-500 mr-2"></i> Panel de Control del Bot
+    </h4>
+
+    <div class="flex gap-2 mb-4">
+        <button @onclick="CargarStats" class="px-4 py-2 bg-turquesa-500 hover:bg-turquesa-600 text-white rounded-lg shadow transition-colors text-sm">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i> Actualizar
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <p class="text-gray-500 text-sm">Cargando estadisticas...</p>
+    }
+    else if (stats != null && stats.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @foreach (var sucursal in stats.Select(s => s.UnidadMedica).Distinct())
+            {
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <h5 class="font-bold text-gray-700 mb-2 border-b pb-1">@sucursal</h5>
+                    @foreach (var esp in stats.Where(s => s.UnidadMedica == sucursal).GroupBy(s => s.Especialidad))
+                    {
+                        <div class="mb-2">
+                            <span class="text-xs font-bold text-turquesa-800 uppercase">@esp.Key</span>
+                            <ul class="mt-1 space-y-1">
+                                @foreach (var stat in esp.OrderBy(s => s.EstadoBot))
+                                {
+                                    <li class="flex justify-between text-xs">
+                                        <span class="text-gray-600">@FormatEstado(stat.EstadoBot)</span>
+                                        <span class="font-semibold @GetColorClass(stat.EstadoBot)">@stat.Cantidad</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        
+        <div class="mt-6 border-t border-gray-200 pt-4">
+            <h4 class="text-md font-bold text-gray-700 mb-2"><i class="fa-solid fa-gears text-gray-500 mr-2"></i> Especialidades Habilitadas para Agendamiento</h4>
+            <p class="text-xs text-gray-500 mb-4">El bot solo asignará turnos automáticamente a las especialidades marcadas. Las desmarcadas se quedarán en estado 'Standby / Pausado'.</p>
+            
+            @if (config != null && todasEspecialidades.Any())
+            {
+                <div class="flex flex-wrap gap-3 mb-2">
+                    @foreach(var esp in todasEspecialidades)
+                    {
+                        bool isChecked = !EstaPausada(esp);
+                        <label class="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" checked="@isChecked" @onchange="@(e => OnStandbyChanged(esp, e.Value))" class="w-4 h-4 text-turquesa-600 bg-gray-100 border-gray-300 rounded focus:ring-turquesa-500" />
+                            <span class="text-sm font-semibold text-gray-700">@esp</span>
+                        </label>
+                    }
+                </div>
+                
+                @if(showConfigSaved) {
+                    <span class="text-green-600 text-xs font-bold transition-opacity">¡Configuración guardada!</span>
+                }
+            }
+
+            @if (!string.IsNullOrEmpty(configError))
+            {
+                <p class="text-red-600 text-xs font-bold mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> @configError</p>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-gray-500 text-sm">No hay datos del bot.</p>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<BotStat> stats = new();
+
+        private BotConfig config = new();
+    private List<string> todasEspecialidades = new();
+    private bool showConfigSaved = false;
+
+    public class BotConfig {
+        public int DiasAnticipacion { get; set; } = 7;
+        public string EspecialidadesStandby { get; set; } = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarStats();
+    }
+
+    private string configError = "";
+
+    private async Task CargarStats()
+    {
+        isLoading = true;
+        configError = "";
+        try
+        {
+            stats = await Http.GetFromJsonAsync<List<BotStat>>("api/BotDashboard/stats") ?? new();
+            todasEspecialidades = stats.Select(s => s.Especialidad).Where(e => !string.IsNullOrEmpty(e)).Distinct().OrderBy(e => e).ToList();
+        }
+        catch (Exception ex)
+        {
+            configError = "No se pudieron cargar las estadísticas: " + ex.Message;
+        }
+
+        try
+        {
+            config = await Http.GetFromJsonAsync<BotConfig>("api/BotDerivaciones/config") ?? new BotConfig();
+        }
+        catch (Exception ex)
+        {
+            // Si no se puede leer la configuración NO se debe permitir guardar: se pisaría la lista real con una vacía
+            configLeida = false;
+            configError = "No se pudo leer la configuración del bot: " + ex.Message;
+            isLoading = false;
+            return;
+        }
+        configLeida = true;
+        isLoading = false;
+    }
+
+    private bool configLeida = false;
+
+    // Una especialidad está pausada solo si su nombre coincide exactamente con uno de la lista (no por "contiene")
+    private bool EstaPausada(string especialidad)
+    {
+        return (config.EspecialidadesStandby ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Any(s => s.Trim().Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task OnStandbyChanged(string especialidad, object isCheckedObj)
+    {
+        if (!configLeida)
+        {
+            configError = "La configuración no está cargada; pulsa Actualizar antes de cambiarla.";
+            return;
+        }
+
+        bool isEnabled = (bool)isCheckedObj;
+        var standbyList = (config.EspecialidadesStandby ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+
+        if (isEnabled) {
+            standbyList.RemoveAll(s => s.Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase));
+        } else {
+            if (!standbyList.Any(s => s.Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase))) {
+                standbyList.Add(especialidad.Trim());
+            }
+        }
+
+        configError = "";
+        try
+        {
+            // Se envía solo la lista de especialidades; los días de anticipación no se tocan
+            var response = await Http.PostAsJsonAsync("api/BotDerivaciones/config", new { EspecialidadesStandby = string.Join(",", standbyList) });
+            if (!response.IsSuccessStatusCode)
+            {
+                configError = "No se pudo guardar: " + await response.Content.ReadAsStringAsync();
+                return;
+            }
+            config = await response.Content.ReadFromJsonAsync<BotConfig>() ?? config;
+        }
+        catch (Exception ex)
+        {
+            configError = "No se pudo guardar: " + ex.Message;
+            return;
+        }
+
+        showConfigSaved = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        showConfigSaved = false;
+        StateHasChanged();
+    }
+
+    private string FormatEstado(string estado)
+    {
+        return estado?.Replace("_", " ") ?? "N/A";
+    }
+
+    private string GetColorClass(string estado)
+    {
+        if (estado == null) return "text-gray-800";
+        if (estado.Contains("1_NUEVO")) return "text-red-500";
+        if (estado.Contains("MENSAJE_ENVIADO")) return "text-orange-500";
+        if (estado.Contains("CONFIRMADO") && !estado.Contains("NO")) return "text-green-600";
+        return "text-gray-800";
+    }
+
+    public class BotStat
+    {
+        public string EstadoBot { get; set; } = string.Empty;
+        public string UnidadMedica { get; set; } = string.Empty;
+        public string Especialidad { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+    }
+}
+
+
+

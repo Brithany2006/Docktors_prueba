@@ -1,0 +1,163 @@
+﻿@page "/login"
+@using System.Text.Json
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject LaboratorioFront.Services.ApiService Api
+
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="flex justify-center"><img src="/images/Login.png" alt="Login" class="mx-auto w-48 object-contain" /></div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-gray-100">
+            <EditForm Model="model" OnValidSubmit="ValidarUsuario" class="space-y-6">
+                <DataAnnotationsValidator />
+
+                <div>
+                    <label for="ruc" class="block text-sm font-semibold text-turquesa-900">
+                        Identificacion / RUC
+                    </label>
+                    <div class="mt-2 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-user text-turquesa-500"></i>
+                        </div>
+                        <InputText @bind-Value="model.usuario" id="ruc" name="username" autocomplete="username" inputmode="numeric" class="focus:ring-turquesa-500 focus:border-turquesa-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 border bg-gray-50" placeholder="RUC / CEDULA" />
+                    </div>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-semibold text-turquesa-900">
+                        Contrasena
+                    </label>
+                    <div class="mt-2 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-lock text-turquesa-500"></i>
+                        </div>
+                        <InputText @bind-Value="model.password" type="password" id="password" name="password" autocomplete="current-password" class="focus:ring-turquesa-500 focus:border-turquesa-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 border bg-gray-50" placeholder="***********" />
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" disabled="@isSubmitting" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-turquesa-500 hover:bg-turquesa-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors disabled:opacity-50">
+                        @(isSubmitting ? "Autenticando..." : "Ingresar al Sistema")
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="rounded-md bg-red-50 p-4 mt-4 border border-red-200">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fa-solid fa-circle-exclamation text-red-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">
+                                    Error de acceso
+                                </h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <p>@errorMessage</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel model = new();
+    private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await JS.InvokeVoidAsync("laboratorio.removeToken");
+        Api.SetToken(string.Empty);
+    }
+
+    private async Task ValidarUsuario()
+    {
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var token = await Api.LoginAsync(model.usuario, model.password);
+            
+            if (string.IsNullOrEmpty(token))
+            {
+                errorMessage = "Credenciales incorrectas.";
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("laboratorio.setToken", token);
+                Api.SetToken(token);
+
+                var partes = token.Split('.');
+                if (partes.Length > 1)
+                {
+                    var base64Url = partes[1];
+                    var base64 = base64Url.Replace('-', '+').Replace('_', '/');
+                    switch (base64.Length % 4)
+                    {
+                        case 2: base64 += "=="; break;
+                        case 3: base64 += "="; break;
+                    }
+                    var bytes = Convert.FromBase64String(base64);
+                    var payloadJson = JsonSerializer.Deserialize<Dictionary<string, object>>(bytes);
+                    var roleClaim = payloadJson?.FirstOrDefault(x => x.Key.Equals("role", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
+
+                    if (roleClaim == "Admin")
+                        Nav.NavigateTo("/dashboard-admin", true);
+                    else if (roleClaim == "Doctor")
+                        Nav.NavigateTo("/dashboard-doctor", true);
+                    else if (roleClaim == "AdminDerivaciones")
+                        Nav.NavigateTo("/dashboard-derivaciones", true);
+                    else if (roleClaim == "EKGMD" || roleClaim == "ekgmed")
+                        Nav.NavigateTo("/dashboard-ekgmd", true);
+                    else if (roleClaim == "ECOMD")
+                        Nav.NavigateTo("/dashboard-ecomd", true);
+                    else if (roleClaim == "Caja" || roleClaim == "UsuarioCaja")
+                        Nav.NavigateTo("/dashboard-caja", true);
+                    else if (roleClaim == "CajaCitas")
+                        Nav.NavigateTo("/dashboard-caja", true);
+                    else if (roleClaim == "AdminCentro")
+                        Nav.NavigateTo("/dashboard-admin-centro", true);
+                    else
+                        Nav.NavigateTo("/pacientes", true);
+                }
+                else
+                {
+                    Nav.NavigateTo("/", true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al conectar con el servidor: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    public class LoginModel
+    {
+        public string usuario { get; set; } = string.Empty;
+        public string password { get; set; } = string.Empty;
+    }
+}
+
+
+
+
+
+
+
+
+

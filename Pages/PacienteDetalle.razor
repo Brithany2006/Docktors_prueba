@@ -1,0 +1,257 @@
+﻿@page "/paciente-detalle/{CitaId:int}"
+@using LaboratorioFront.Services
+@using static LaboratorioFront.Services.ApiService
+
+@inject ApiService Api
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<div class="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    
+    <button class="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors" @onclick="Volver">
+        <i class="fa-solid fa-arrow-left mr-2"></i> Volver a la Lista
+    </button>
+
+    @if (isLoading)
+    {
+        <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-turquesa-500"></div>
+            <h5 class="mt-6 text-gray-500 font-medium text-lg">Cargando detalles de la cita...</h5>
+        </div>
+    }
+    else if (cita == null)
+    {
+        <div class="rounded-xl bg-rojo-500 p-8 shadow-md text-center text-white">
+            <i class="fa-solid fa-triangle-exclamation text-4xl mb-4"></i>
+            <h4 class="text-xl font-bold mb-2">Cita no encontrada</h4>
+            <p>No se encontro la informacion para esta cita medica.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Header Info -->
+        <div class="bg-gradient-to-r from-turquesa-900 to-turquesa-500 rounded-2xl shadow-lg p-6 sm:p-8 mb-8 text-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-10 blur-3xl"></div>
+            
+            <div class="relative z-10">
+                <h2 class="text-3xl font-extrabold flex items-center mb-6">
+                    <i class="fa-solid fa-circle-user mr-3"></i> @cita.Paciente
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <p class="text-turquesa-100 text-sm mb-1 uppercase tracking-wider font-semibold"><i class="fa-solid fa-id-card mr-1"></i> Cedula</p>
+                        <p class="font-bold text-lg">@cita.Cedula</p>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <p class="text-turquesa-100 text-sm mb-1 uppercase tracking-wider font-semibold"><i class="fa-regular fa-calendar-check mr-1"></i> Fecha de Atencion</p>
+                        <p class="font-bold text-lg">@(cita.FechaAtencion?.ToString("dd/MM/yyyy") ?? "-")</p>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                        <p class="text-turquesa-100 text-sm mb-1 uppercase tracking-wider font-semibold"><i class="fa-solid fa-hashtag mr-1"></i> Nro Cita</p>
+                        <p class="font-bold text-lg">@cita.NumeroCita</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="mb-6 text-xl font-bold text-gray-800 flex items-center">
+            <i class="fa-solid fa-list-check text-turquesa-500 mr-3"></i> Resultados Agrupados por Area
+        </h4>
+
+        @if (!examenesAgrupados.Any())
+        {
+            <div class="rounded-xl bg-blue-50 border border-blue-100 p-8 text-center text-blue-800">
+                <i class="fa-solid fa-circle-info text-3xl mb-3"></i>
+                <p class="text-lg">No hay resultados medicos registrados en esta cita.</p>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-6">
+                @foreach (var grupo in examenesAgrupados)
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" x-data="{ expanded: false }">
+                        <div class="bg-turquesa-50 border-l-4 border-turquesa-500 p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-4 cursor-pointer hover:bg-turquesa-100 transition-colors" @onclick="() => ToggleGrupo(grupo.Key)">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid @(IsExpanded(grupo.Key) ? "fa-chevron-up" : "fa-chevron-down") text-turquesa-700"></i>
+                                <span class="text-lg font-bold text-turquesa-900 uppercase">@grupo.Key</span>
+                            </div>
+                            
+                            @if (grupo.Any(x => x.Valores != null && x.Valores.Any()) || grupo.Key.ToUpper() == "LABORATORIO")
+                            {
+                                <a class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-turquesa-500 hover:bg-turquesa-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors" 
+                                   target="_blank" href="@Api.BuildOdooGenerarPdfUrl(cita.Id, grupo.Key)" @onclick:stopPropagation="true">
+                                    <i class="fa-solid fa-file-pdf mr-2 text-rojo-500"></i> Descargar PDF de @grupo.Key
+                                </a>
+                            }
+                        </div>
+                        
+                        @if (IsExpanded(grupo.Key))
+                        {
+                            <div class="p-0 border-t border-gray-100">
+                                @{
+                                    var examenesAMostrar = grupo.Where(x => x.Valores != null && x.Valores.Any()).ToList();
+                                    if (!examenesAMostrar.Any())
+                                    {
+                                        examenesAMostrar = grupo.ToList();
+                                    }
+                                }
+
+                                <div class="divide-y divide-gray-100">
+                                    @foreach (var ex in examenesAMostrar)
+                                    {
+                                        <div class="p-5 sm:p-6 hover:bg-gray-50 transition-colors">
+                                            <h6 class="font-bold text-turquesa-700 text-lg mb-4">@ex.Nombre</h6>
+                                            
+                                            @if (ex.Valores != null && ex.Valores.Any())
+                                            {
+                                                <div class="overflow-x-auto rounded-lg border border-gray-200 mb-4">
+                                                    <table class="min-w-full divide-y divide-gray-200">
+                                                        <thead class="bg-gray-50">
+                                                            <tr>
+                                                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-2/5">Parametro</th>
+                                                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/5">Valor</th>
+                                                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/5">Rango Normal</th>
+                                                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/5">Unidad</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="bg-white divide-y divide-gray-200">
+                                                            @foreach (var val in ex.Valores)
+                                                            {
+                                                                <tr class="hover:bg-gray-50">
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-extrabold text-turquesa-900 bg-turquesa-50/50">@val.Nombre</td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">@val.Valor</td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@val.RangoNormal</td>
+                                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@val.Unidad</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(ex.Apreciacion) || !string.IsNullOrWhiteSpace(ex.Comentario))
+                                            {
+                                                <div class="mt-4 p-5 bg-blue-50/50 rounded-lg border border-blue-100 mb-4 shadow-sm">
+                                                    <h4 class="font-extrabold text-blue-900 mb-3 flex items-center">
+                                                        <i class="fa-solid fa-file-medical text-blue-500 mr-2"></i> Informe Medico / Resultados
+                                                    </h4>
+                                                    @if (!string.IsNullOrWhiteSpace(ex.Apreciacion))
+                                                    {
+                                                        <div class="text-gray-800 whitespace-pre-wrap leading-relaxed text-sm md:text-base font-medium mb-2">@((MarkupString)ex.Apreciacion.Replace("\n", "<br/>"))</div>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(ex.Comentario))
+                                                    {
+                                                        <div class="text-gray-600 italic whitespace-pre-wrap leading-relaxed text-sm border-l-4 border-gray-300 pl-3 mt-3">@((MarkupString)ex.Comentario.Replace("\n", "<br/>"))</div>
+                                                    }
+                                                </div>
+                                            }
+                                            
+
+                                            @if (ex.TieneAdjunto1 || ex.TieneAdjunto2 || grupo.Key.ToUpper() != "LABORATORIO")
+                                            {
+                                                <div class="flex flex-col sm:flex-row justify-center items-center bg-gray-50 p-6 rounded-lg border border-gray-200 gap-4 mt-2">
+                                                    @if (grupo.Key.ToUpper() != "LABORATORIO")
+                                                    {
+                                                        <a class="inline-flex items-center px-6 py-3 border border-rojo-500 text-base font-bold rounded-lg text-white bg-rojo-500 hover:bg-rojo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rojo-500 transition-colors shadow-sm hover:shadow" 
+                                                           target="_blank" href="@Api.BuildOdooInformePdfUrl(ex.IdSubstudy)">
+                                                            <i class="fa-solid fa-file-pdf mr-2"></i> Ver Informe
+                                                        </a>
+                                                    }
+                                                    @if (ex.TieneAdjunto1)
+                                                    {
+                                                        var isPdf1 = ex.Adjunto1Nombre.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                                                        <a class="inline-flex items-center px-6 py-3 border border-turquesa-500 text-base font-bold rounded-lg text-turquesa-700 bg-white hover:bg-turquesa-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors shadow-sm hover:shadow" 
+                                                           target="_blank" href="@Api.BuildOdooArchivoUrl(ex.IdSubstudy)">
+                                                            @if (isPdf1)
+                                                            {
+                                                                <i class="fa-solid fa-image mr-2"></i> @("Ver Imagen")
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fa-solid fa-image mr-2"></i> @("Ver Imagen")
+                                                            }
+                                                        </a>
+                                                    }
+                                                    @if (ex.TieneAdjunto2)
+                                                    {
+                                                        var isPdf2 = ex.Adjunto2Nombre.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                                                        <a class="inline-flex items-center px-6 py-3 border border-turquesa-500 text-base font-bold rounded-lg text-turquesa-700 bg-white hover:bg-turquesa-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors shadow-sm hover:shadow" 
+                                                           target="_blank" href="@Api.BuildOdooArchivo2Url(ex.IdSubstudy)">
+                                                            @if (isPdf2)
+                                                            {
+                                                                <i class="fa-solid fa-image mr-2"></i> @("Ver Imagen (2)")
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fa-solid fa-image mr-2"></i> @("Ver Imagen (2)")
+                                                            }
+                                                        </a>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int CitaId { get; set; }
+
+    private bool isLoading = true;
+    private OdooCitaDto? cita;
+    
+    // Agrupamos los examenes por "TipoResultado" (ej. LABORATORIO, RX, EKG)
+    private IEnumerable<IGrouping<string, OdooExamenDto>> examenesAgrupados = Enumerable.Empty<IGrouping<string, OdooExamenDto>>();
+
+    // Estado de los collapsibles
+    private HashSet<string> expandedGroups = new HashSet<string>();
+
+    private bool IsExpanded(string key) => expandedGroups.Contains(key);
+
+    private void ToggleGrupo(string key)
+    {
+        if (expandedGroups.Contains(key))
+            expandedGroups.Remove(key);
+        else
+            expandedGroups.Add(key);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("laboratorio.getToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            Nav.NavigateTo("/login", true);
+            return;
+        }
+
+        Api.SetToken(token);
+        
+        // Obtenemos todos y filtramos (podriamos optimizar con endpoint especifico)
+        var citas = await Api.GetMisResultadosExternosAsync();
+        cita = citas.FirstOrDefault(c => c.Id == CitaId);
+
+        if (cita != null && cita.Examenes != null)
+        {
+            // Agrupar examenes por el tipo (Ej. "LABORATORIO")
+            examenesAgrupados = cita.Examenes
+                                    .Where(e => !string.IsNullOrWhiteSpace(e.TipoResultado))
+                                    .GroupBy(e => e.TipoResultado.ToUpper());
+        }
+
+        isLoading = false;
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/pacientes");
+    }
+}

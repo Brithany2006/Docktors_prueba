@@ -1,0 +1,107 @@
+@page "/"
+@inject LaboratorioFront.Services.ApiService Api
+
+<div class="w-full h-[calc(100vh-4rem)] md:h-screen bg-cover bg-center bg-no-repeat relative home-hero-bg">
+    <!-- Left side Carousel Container -->
+    <div class="absolute top-0 left-0 h-full w-full md:w-1/2 flex items-center justify-center p-4">
+        @if (isLoading)
+        {
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-turquesa-500"></div>
+            </div>
+        }
+        else if (carouselImages != null && carouselImages.Any())
+        {
+            <div class="relative w-full max-w-lg h-3/4 max-h-[600px] overflow-hidden rounded-2xl shadow-2xl group">
+                
+                @for (int i = 0; i < carouselImages.Count; i++)
+                {
+                    var img = carouselImages[i];
+                    var isActive = i == currentIndex;
+                    <img src="@(Api.Http.BaseAddress?.ToString().TrimEnd('/') + img)" 
+                         class="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out @(isActive ? "opacity-100" : "opacity-0")" 
+                         alt="Carousel Image @i" onerror="this.onerror=null; this.src='images/Login.png';" />
+                }
+
+                <!-- Controls -->
+                @if (carouselImages.Count > 1)
+                {
+                    <button @onclick="PrevImage" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button @onclick="NextImage" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    
+                    <!-- Indicators -->
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        @for (int i = 0; i < carouselImages.Count; i++)
+                        {
+                            var index = i;
+                            <button @onclick="() => GoToImage(index)" class="w-3 h-3 rounded-full transition-colors duration-300 @(currentIndex == index ? "bg-white" : "bg-white/50")"></button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<string> carouselImages = new();
+    private bool isLoading = true;
+    private int currentIndex = 0;
+    private System.Threading.Timer? timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            carouselImages = await Api.GetCarouselImagesAsync();
+            if (carouselImages.Count > 1)
+            {
+                timer = new System.Threading.Timer(TimerCallback, null, 5000, 5000);
+            }
+        }
+        catch { }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void TimerCallback(object? state)
+    {
+        InvokeAsync(() =>
+        {
+            NextImage();
+            StateHasChanged();
+        });
+    }
+
+    private void NextImage()
+    {
+        if (carouselImages.Count > 0)
+        {
+            currentIndex = (currentIndex + 1) % carouselImages.Count;
+        }
+    }
+
+    private void PrevImage()
+    {
+        if (carouselImages.Count > 0)
+        {
+            currentIndex = (currentIndex - 1 + carouselImages.Count) % carouselImages.Count;
+        }
+    }
+
+    private void GoToImage(int index)
+    {
+        currentIndex = index;
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+}
