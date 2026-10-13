@@ -21,16 +21,12 @@
                 <i class="fa-solid fa-notes-medical w-5 text-center @(currentTab == "nueva" ? "text-turquesa-600" : "text-gray-400")"></i> Nueva Derivacion
             </button>
             
-                                    <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "bot" ? "bg-green-50 text-green-700 shadow-sm border border-green-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("bot"))">
+            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "bot" ? "bg-green-50 text-green-700 shadow-sm border border-green-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("bot"))">
                 <i class="fa-brands fa-whatsapp w-5 text-center @(currentTab == "bot" ? "text-green-600" : "text-gray-400")"></i> Carga Bot WhatsApp
             </button>
-            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "panelbot" ? "bg-teal-50 text-teal-700 shadow-sm border border-teal-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("panelbot"))">
-                <i class="fa-solid fa-robot w-5 text-center @(currentTab == "panelbot" ? "text-teal-600" : "text-gray-400")"></i> Panel del Bot
-            </button>
-                        <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "agenda" ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("agenda"))">
+            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "agenda" ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("agenda"))">
                 <i class="fa-solid fa-calendar-days w-5 text-center @(currentTab == "agenda" ? "text-purple-600" : "text-gray-400")"></i> Agenda Diaria
             </button>
-            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "estadobot" ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("estadobot"))"><i class="fa-brands fa-whatsapp w-5 text-center @(currentTab == "estadobot" ? "text-indigo-600" : "text-gray-400")"></i> Estado Bot WhatsApp</button>
 <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "citas" ? "bg-turquesa-50 text-turquesa-700 shadow-sm border border-turquesa-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("citas"))">
                 <i class="fa-solid fa-calendar-check w-5 text-center @(currentTab == "citas" ? "text-turquesa-600" : "text-gray-400")"></i> Citas Generadas
             </button>
@@ -264,9 +260,30 @@
                 }
             </div>
         }
-        
-                        else if (currentTab == "estadobot")
+        else if (currentTab == "bot")
         {
+            <div class="space-y-6">
+                <!-- Selector de sub-pestañas -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabBot == "carga" ? "bg-green-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabBot("carga"))">
+                            <i class="fa-brands fa-whatsapp"></i> Carga Bot WhatsApp
+                        </button>
+                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabBot == "estadobot" ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabBot("estadobot"))">
+                            <i class="fa-solid fa-robot"></i> Estado Bot WhatsApp
+                            @if (botDerivaciones != null && botDerivaciones.Count > 0)
+                            {
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold @(subTabBot == "estadobot" ? "bg-indigo-700 text-white" : "bg-gray-200 text-gray-700")">@botDerivaciones.Count</span>
+                            }
+                        </button>
+                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabBot == "panelbot" ? "bg-teal-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabBot("panelbot"))">
+                            <i class="fa-solid fa-chart-pie"></i> Panel del Bot
+                        </button>
+                    </div>
+                </div>
+
+                @if (subTabBot == "estadobot")
+                {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 flex-1 min-w-0 w-full m-0 overflow-hidden flex flex-col">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fa-solid fa-robot text-indigo-500 mr-2"></i> Estado del Bot (WhatsApp)</h2>
                 
@@ -391,16 +408,16 @@
                     }
                 }
             </div>
-        }
-        else if (currentTab == "panelbot")
-        {
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <LaboratorioFront.Shared.BotDashboardTab />
-            </div>
-        }
-        else if (currentTab == "bot")
-        {
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                }
+                else if (subTabBot == "panelbot")
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <LaboratorioFront.Shared.BotDashboardTab />
+                    </div>
+                }
+                else if (subTabBot == "carga")
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fa-brands fa-whatsapp text-green-500 mr-2"></i> Carga de Archivos para Bot (WhatsApp)</h2>
                 <p class="text-gray-600 mb-6">Sube el archivo Excel (.xlsx) generado por tu programa de escritorio para procesar las derivaciones.</p>
                 
@@ -556,6 +573,8 @@
                         <p class="mt-2 text-sm font-semibold text-blue-800">@botMessage</p>
                     }
                 </div>
+            </div>
+                }
             </div>
         }
         
@@ -1961,6 +1980,22 @@
         }
     }
 
+    private string subTabBot = "carga";
+
+    private async Task CambiarSubTabBot(string subTab)
+    {
+        subTabBot = subTab;
+        if (subTab == "carga")
+        {
+            await CargarEstadoEnvio();
+            await CargarConfigBot();
+        }
+        else if (subTab == "estadobot")
+        {
+            await CargarEstadoBot();
+        }
+    }
+
     private async Task SetTab(string tab)
     {
         currentTab = tab;
@@ -1970,14 +2005,22 @@
             StateHasChanged();
             todasLasCitas = await Service.GetAllCitasAsync();
         }
-        else if (tab == "estadobot")
+        else if (tab == "estadobot" || tab == "panelbot")
         {
-            await CargarEstadoBot();
+            currentTab = "bot";
+            await CambiarSubTabBot(tab);
         }
         else if (tab == "bot")
         {
-            await CargarEstadoEnvio();
-            await CargarConfigBot();
+            if (subTabBot == "carga")
+            {
+                await CargarEstadoEnvio();
+                await CargarConfigBot();
+            }
+            else if (subTabBot == "estadobot")
+            {
+                await CargarEstadoBot();
+            }
         }
         else if (tab == "procedimientos")
         {

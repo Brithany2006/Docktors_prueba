@@ -1,0 +1,148 @@
+is_global = true
+build_property.EnableAotAnalyzer = 
+build_property.EnableSingleFileAnalyzer = 
+build_property.EnableTrimAnalyzer = false
+build_property.IncludeAllContentForSelfExtract = 
+build_property.TargetFramework = net8.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EntryPointFilePath = 
+build_property._SupportedPlatformList = browser
+build_property.RootNamespace = LaboratorioFront
+build_property.RootNamespace = LaboratorioFront
+build_property.ProjectDir = C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = false
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/App.razor]
+build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Componentes/RegistroWalkinCaja.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29tcG9uZW50ZXNcUmVnaXN0cm9XYWxraW5DYWphLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Contacto.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29udGFjdG8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/CrearPaciente.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ3JlYXJQYWNpZW50ZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardAdmin.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkQWRtaW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardAdminCentro.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkQWRtaW5DZW50cm8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardAdminDerivaciones.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkQWRtaW5EZXJpdmFjaW9uZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardCaja.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkQ2FqYS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardCajaCitas.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkQ2FqYUNpdGFzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardDoctor.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkRG9jdG9yLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardEkgmd.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkRWtnbWQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/DashboardParticular.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkUGFydGljdWxhci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/EmpresaPacientes.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRW1wcmVzYVBhY2llbnRlcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Examenes.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbWVuZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/FormularioParticular.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRm9ybXVsYXJpb1BhcnRpY3VsYXIucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/LoginPaciente.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW5QYWNpZW50ZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/MisResultados.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWlzUmVzdWx0YWRvcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Nosotros.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm9zb3Ryb3MucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/PacienteDetalle.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGFjaWVudGVEZXRhbGxlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/PacienteDocs.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGFjaWVudGVEb2NzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/Pacientes.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGFjaWVudGVzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Pages/UsuarioEditar.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXN1YXJpb0VkaXRhci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Shared/BotDashboardTab.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXEJvdERhc2hib2FyZFRhYi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Shared/CrearDoctorTab.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENyZWFyRG9jdG9yVGFiLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Shared/HorarioDoctoresTab.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXEhvcmFyaW9Eb2N0b3Jlc1RhYi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/Shared/SeguimientoSubsecuentesTab.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXFNlZ3VpbWllbnRvU3Vic2VjdWVudGVzVGFiLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Admin/Documents/Doktors_Practica/Doktors_Practica/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
