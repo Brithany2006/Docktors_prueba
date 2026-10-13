@@ -1,4 +1,4 @@
-﻿@inject HttpClient Http
+@inject HttpClient Http
 @page "/dashboard-derivaciones"
 @using LaboratorioFront.Services
 @inject DerivacionesService Service
@@ -42,11 +42,8 @@
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "procedimientos" ? "bg-blue-50 text-blue-700 shadow-sm border border-blue-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("procedimientos"))">
                 <i class="fa-solid fa-heart-pulse w-5 text-center @(currentTab == "procedimientos" ? "text-blue-600" : "text-gray-400")"></i> Procedimientos
             </button>
-                        <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "subsecuentes" ? "bg-orange-50 text-orange-700 shadow-sm border border-orange-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("subsecuentes"))">
-                <i class="fa-solid fa-clock-rotate-left w-5 text-center @(currentTab == "subsecuentes" ? "text-orange-600" : "text-gray-400")"></i> Subsecuentes Pdtes.
-            </button>
-            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "subagendados" ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("subagendados"))">
-                <i class="fa-solid fa-calendar-check w-5 text-center @(currentTab == "subagendados" ? "text-emerald-600" : "text-gray-400")"></i> Subsecuentes Agendados
+            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "subsecuentes" ? "bg-orange-50 text-orange-700 shadow-sm border border-orange-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("subsecuentes"))">
+                <i class="fa-solid fa-clock-rotate-left w-5 text-center @(currentTab == "subsecuentes" ? "text-orange-600" : "text-gray-400")"></i> Subsecuentes
             </button>
             <div class="mt-auto hidden md:block pt-4 border-t border-gray-100">
 
@@ -444,6 +441,59 @@
                         <i class="fa-solid @(uploadSuccess ? "fa-check-circle" : "fa-circle-xmark") mr-2"></i> @uploadMessage
                     </div>
                 }
+
+                <div class="mt-6 p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-100">
+                        <div>
+                            <h4 class="text-md font-bold text-gray-800 flex items-center">
+                                <i class="fa-solid fa-gears text-turquesa-600 mr-2"></i> Especialidades Habilitadas para Agendamiento
+                            </h4>
+                            <p class="text-xs text-gray-500 mt-1">El bot solo asignará turnos automáticamente a las especialidades marcadas. Las desmarcadas se quedarán en estado 'Standby / Pausado'.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @onclick="HabilitarTodasEspecialidades" class="px-4 py-2 bg-turquesa-600 hover:bg-turquesa-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-check-double"></i> Habilitar todas
+                            </button>
+                            <button @onclick="DeshabilitarTodasEspecialidades" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-ban"></i> Deshabilitar todas
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (cargandoEspecialidadesBot)
+                    {
+                        <div class="flex items-center gap-2 py-3 text-turquesa-600 text-sm">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Cargando especialidades...
+                        </div>
+                    }
+                    else if (todasEspecialidadesBot != null && todasEspecialidadesBot.Any())
+                    {
+                        <div class="flex flex-wrap gap-2.5 mb-2">
+                            @foreach(var esp in todasEspecialidadesBot)
+                            {
+                                bool isChecked = !EstaPausada(esp);
+                                <label class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold cursor-pointer border transition-all @(isChecked ? "bg-turquesa-50 text-turquesa-900 border-turquesa-200 shadow-sm" : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100")">
+                                    <input type="checkbox" checked="@isChecked" @onchange="@(e => OnStandbyChanged(esp, e.Value))" class="w-4 h-4 text-turquesa-600 bg-white border-gray-300 rounded focus:ring-turquesa-500" />
+                                    <span>@esp</span>
+                                </label>
+                            }
+                        </div>
+
+                        @if(showConfigSaved) {
+                            <span class="text-green-600 text-xs font-bold transition-opacity">¡Configuración guardada!</span>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-xs text-gray-400">No hay especialidades registradas en el bot.</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(configBotError))
+                    {
+                        <p class="text-red-600 text-xs font-bold mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> @configBotError</p>
+                    }
+                </div>
+
                 <div class="mt-4 p-4 rounded-xl bg-orange-50 border border-orange-200">
                     <h4 class="text-lg font-bold text-orange-800 mb-2"><i class="fa-solid fa-gear mr-2"></i> Configuracion del Margen (Bot)</h4>
                     <p class="text-sm text-orange-600 mb-3">Establece a partir de cuantos dias en el futuro el bot empezara a buscar el primer turno disponible (Ej: 1 o 7 dias). Los dias maximos limitan hasta donde puede asignar (contados desde hoy, por defecto 14): quien no tenga cupo dentro de ese plazo queda en espera y se reintenta en la siguiente ejecucion.</p>
@@ -779,156 +829,181 @@
         }
                 else if (currentTab == "subsecuentes")
         {
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Subsecuentes Pendientes</h2>
-
-                <div class="mb-4 flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
-                        <i class="fa-solid fa-search text-gray-400 mx-3"></i>
-                        <input type="text" value="@filtroSinSubsecuente" @oninput="OnSearchSinSubsecuenteInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
-                    </div>
-                </div>
-
-                @if (citasSinSubsecuente == null)
-                {
-                    <div class="flex justify-center items-center py-12 text-turquesa-600">
-                        <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
-                    </div>
-                }
-                else if (citasSinSubsecuenteFiltradas == null || citasSinSubsecuenteFiltradas.Count == 0)
-                {
-                    <div class="text-center py-12 text-gray-500">
-                        <i class="fa-solid fa-check-double text-4xl mb-3"></i>
-                        <p>No hay pacientes sin cita subsecuente.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="overflow-x-auto rounded-xl border border-gray-200">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-3 py-3 font-semibold text-sm">Ultima Cita Atendida</th>
-                                    <th class="px-3 py-3 font-semibold text-sm">Paciente</th>
-                                    <th class="px-3 py-3 font-semibold text-sm">Doctor que Atendio</th>
-                                    <th class="px-3 py-3 font-semibold text-sm text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var cita in citasSinSubsecuenteFiltradas)
-                                {
-                                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                        <td class="px-3 py-3 text-sm font-medium text-gray-800">@cita.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
-                                        <td class="px-3 py-3 text-sm text-gray-600">
-                                            @(cita.Derivacion?.Paciente?.NombreCompleto ?? "N/A")<br/>
-                                            <span class="text-xs text-gray-400">@cita.Derivacion?.Paciente?.Cedula</span>
-                                        </td>
-                                        <td class="px-3 py-3 text-sm text-gray-600">@(cita.Doctor?.Nombre ?? "N/A")</td>
-                                        <td class="px-3 py-3 text-center whitespace-nowrap">
-                                            @if(cita.Derivacion != null)
-                                              {
-                                                  if (cita.Derivacion.Citas != null && cita.Derivacion.Citas.Any(c => c != null && c.Estado == "Pendiente" && c.Activo))
-                                                  {
-                                                      <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-lg border border-green-200">
-                                                          <i class="fa-solid fa-check-circle"></i> Activa
-                                                      </span>
-                                                  }
-                                                  else
-                                                  {
-                                                      <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" @onclick="() => AbrirModalAgendar(cita.Derivacion, true, cita.Doctor?.Id ?? 0)">
-                                                          <i class="fa-solid fa-calendar-plus"></i> Agendar Subsecuente
-                                                      </button>
-                                                  }
-                                              }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        }
-        else if (currentTab == "subagendados")
-        {
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-check text-emerald-500 mr-2"></i> Subsecuentes Agendados</h2>
-                    @if (!subAgendadosCargando)
-                    {
-                        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-bold border border-emerald-100">@totalSubAgendados citas subsecuentes</span>
-                    }
-                </div>
-
-                <div class="mb-4 flex flex-col md:flex-row gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
-                        <i class="fa-solid fa-search text-gray-400 mx-3"></i>
-                        <input type="text" value="@filtroSubAgendados" @oninput="OnSearchSubAgendadosInput" placeholder="Buscar por nombres, apellidos o cédula..." class="w-full bg-transparent outline-none text-gray-700" />
-                    </div>
-                    <select value="@estadoSubAgendados" @onchange="OnEstadoSubAgendados" class="px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 outline-none">
-                        <option value="">Todos los estados</option>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Atendido">Atendido</option>
-                        <option value="No Asistio">No asistió</option>
-                    </select>
-                </div>
-
-                @if (subAgendadosCargando)
-                {
-                    <div class="flex justify-center items-center py-12 text-emerald-600">
-                        <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
-                    </div>
-                }
-                else if (subAgendadosServer.Count == 0)
-                {
-                    <div class="text-center py-12 text-gray-500">
-                        <i class="fa-regular fa-calendar-xmark text-4xl mb-3 text-gray-300"></i>
-                        <p>No se encontraron citas subsecuentes con esos filtros.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="overflow-x-auto rounded-xl border border-gray-200">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-3 py-3 font-semibold text-sm">Fecha/Hora Subsecuente</th>
-                                    <th class="px-3 py-3 font-semibold text-sm">Paciente</th>
-                                    <th class="px-3 py-3 font-semibold text-sm">Especialidad</th>
-                                    <th class="px-3 py-3 font-semibold text-sm">Doctor</th>
-                                    <th class="px-3 py-3 font-semibold text-sm text-center">Estado</th>
-                                    <th class="px-3 py-3 font-semibold text-sm">Agendada el</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var cita in subAgendadosServer)
-                                {
-                                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                        <td class="px-3 py-3 text-sm font-medium text-gray-800">@cita.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
-                                        <td class="px-3 py-3 text-sm text-gray-600">
-                                            <span class="font-semibold text-gray-800">@(cita.Derivacion?.Paciente?.NombreCompleto ?? "N/A")</span><br/>
-                                            <span class="text-xs text-gray-400">@(cita.Derivacion?.Paciente?.Cedula ?? "") @(string.IsNullOrWhiteSpace(cita.Derivacion?.Paciente?.Telefono) ? "" : "· " + cita.Derivacion?.Paciente?.Telefono)</span>
-                                        </td>
-                                        <td class="px-3 py-3 text-sm text-gray-600">@(cita.Derivacion?.EspecialidadRequerida ?? cita.Doctor?.Especialidad ?? "N/A")</td>
-                                        <td class="px-3 py-3 text-sm text-gray-600">@LaboratorioFront.Services.Etiquetas.Doctor(cita.Doctor?.Nombre ?? "N/A")</td>
-                                        <td class="px-3 py-3 text-center">
-                                            <span class="px-2 py-1 rounded-md font-bold text-xs @ClaseEstadoSub(cita.Estado)">@EtiquetaEstadoSub(cita.Estado)</span>
-                                        </td>
-                                        <td class="px-3 py-3 text-sm text-gray-500">@(cita.FechaRegistro.HasValue ? cita.FechaRegistro.Value.ToString("dd/MM/yyyy") : "")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="flex items-center justify-between mt-4">
-                        <button disabled="@(paginaSubAgendados <= 1)" @onclick="AnteriorPaginaSubAgendados" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                            <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+            <div class="space-y-6">
+                <!-- Selector de sub-pestañas -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabSubsecuentes == "pendientes" ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabSubsecuentes("pendientes"))">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Subsecuentes Pendientes
+                            @if (citasSinSubsecuenteFiltradas != null && citasSinSubsecuenteFiltradas.Count > 0)
+                            {
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold @(subTabSubsecuentes == "pendientes" ? "bg-orange-600 text-white" : "bg-gray-200 text-gray-700")">@citasSinSubsecuenteFiltradas.Count</span>
+                            }
                         </button>
-                        <span class="text-sm text-gray-600">Página @paginaSubAgendados de @totalPaginasSubAgendados</span>
-                        <button disabled="@(paginaSubAgendados >= totalPaginasSubAgendados)" @onclick="SiguientePaginaSubAgendados" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                            Siguiente <i class="fa-solid fa-chevron-right ml-1"></i>
+                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabSubsecuentes == "agendados" ? "bg-emerald-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabSubsecuentes("agendados"))">
+                            <i class="fa-solid fa-calendar-check"></i> Subsecuentes Agendados
+                            @if (totalSubAgendados > 0)
+                            {
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold @(subTabSubsecuentes == "agendados" ? "bg-emerald-700 text-white" : "bg-gray-200 text-gray-700")">@totalSubAgendados</span>
+                            }
                         </button>
+                    </div>
+                </div>
+
+                @if (subTabSubsecuentes == "pendientes")
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Subsecuentes Pendientes</h2>
+
+                        <div class="mb-4 flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                                <i class="fa-solid fa-search text-gray-400 mx-3"></i>
+                                <input type="text" value="@filtroSinSubsecuente" @oninput="OnSearchSinSubsecuenteInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
+                            </div>
+                        </div>
+
+                        @if (citasSinSubsecuente == null)
+                        {
+                            <div class="flex justify-center items-center py-12 text-turquesa-600">
+                                <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                            </div>
+                        }
+                        else if (citasSinSubsecuenteFiltradas == null || citasSinSubsecuenteFiltradas.Count == 0)
+                        {
+                            <div class="text-center py-12 text-gray-500">
+                                <i class="fa-solid fa-check-double text-4xl mb-3"></i>
+                                <p>No hay pacientes sin cita subsecuente.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
+                                        <tr>
+                                            <th class="px-3 py-3 font-semibold text-sm">Ultima Cita Atendida</th>
+                                            <th class="px-3 py-3 font-semibold text-sm">Paciente</th>
+                                            <th class="px-3 py-3 font-semibold text-sm">Doctor que Atendio</th>
+                                            <th class="px-3 py-3 font-semibold text-sm text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var cita in citasSinSubsecuenteFiltradas)
+                                        {
+                                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                <td class="px-3 py-3 text-sm font-medium text-gray-800">@cita.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td class="px-3 py-3 text-sm text-gray-600">
+                                                    @(cita.Derivacion?.Paciente?.NombreCompleto ?? "N/A")<br/>
+                                                    <span class="text-xs text-gray-400">@cita.Derivacion?.Paciente?.Cedula</span>
+                                                </td>
+                                                <td class="px-3 py-3 text-sm text-gray-600">@(cita.Doctor?.Nombre ?? "N/A")</td>
+                                                <td class="px-3 py-3 text-center whitespace-nowrap">
+                                                    @if(cita.Derivacion != null)
+                                                      {
+                                                          if (cita.Derivacion.Citas != null && cita.Derivacion.Citas.Any(c => c != null && c.Estado == "Pendiente" && c.Activo))
+                                                          {
+                                                              <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-lg border border-green-200">
+                                                                  <i class="fa-solid fa-check-circle"></i> Activa
+                                                              </span>
+                                                          }
+                                                          else
+                                                          {
+                                                              <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" @onclick="() => AbrirModalAgendar(cita.Derivacion, true, cita.Doctor?.Id ?? 0)">
+                                                                  <i class="fa-solid fa-calendar-plus"></i> Agendar Subsecuente
+                                                              </button>
+                                                          }
+                                                      }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (subTabSubsecuentes == "agendados")
+                {
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800"><i class="fa-solid fa-calendar-check text-emerald-500 mr-2"></i> Subsecuentes Agendados</h2>
+                            @if (!subAgendadosCargando)
+                            {
+                                <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-bold border border-emerald-100">@totalSubAgendados citas subsecuentes</span>
+                            }
+                        </div>
+
+                        <div class="mb-4 flex flex-col md:flex-row gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                                <i class="fa-solid fa-search text-gray-400 mx-3"></i>
+                                <input type="text" value="@filtroSubAgendados" @oninput="OnSearchSubAgendadosInput" placeholder="Buscar por nombres, apellidos o cédula..." class="w-full bg-transparent outline-none text-gray-700" />
+                            </div>
+                            <select value="@estadoSubAgendados" @onchange="OnEstadoSubAgendados" class="px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 outline-none">
+                                <option value="">Todos los estados</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Atendido">Atendido</option>
+                                <option value="No Asistio">No asistió</option>
+                            </select>
+                        </div>
+
+                        @if (subAgendadosCargando)
+                        {
+                            <div class="flex justify-center items-center py-12 text-emerald-600">
+                                <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+                            </div>
+                        }
+                        else if (subAgendadosServer.Count == 0)
+                        {
+                            <div class="text-center py-12 text-gray-500">
+                                <i class="fa-regular fa-calendar-xmark text-4xl mb-3 text-gray-300"></i>
+                                <p>No se encontraron citas subsecuentes con esos filtros.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-700 border-b border-gray-200">
+                                        <tr>
+                                            <th class="px-3 py-3 font-semibold text-sm">Fecha/Hora Subsecuente</th>
+                                            <th class="px-3 py-3 font-semibold text-sm">Paciente</th>
+                                            <th class="px-3 py-3 font-semibold text-sm">Especialidad</th>
+                                            <th class="px-3 py-3 font-semibold text-sm">Doctor</th>
+                                            <th class="px-3 py-3 font-semibold text-sm text-center">Estado</th>
+                                            <th class="px-3 py-3 font-semibold text-sm">Agendada el</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var cita in subAgendadosServer)
+                                        {
+                                            <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                                <td class="px-3 py-3 text-sm font-medium text-gray-800">@cita.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td class="px-3 py-3 text-sm text-gray-600">
+                                                    <span class="font-semibold text-gray-800">@(cita.Derivacion?.Paciente?.NombreCompleto ?? "N/A")</span><br/>
+                                                    <span class="text-xs text-gray-400">@(cita.Derivacion?.Paciente?.Cedula ?? "") @(string.IsNullOrWhiteSpace(cita.Derivacion?.Paciente?.Telefono) ? "" : "· " + cita.Derivacion?.Paciente?.Telefono)</span>
+                                                </td>
+                                                <td class="px-3 py-3 text-sm text-gray-600">@(cita.Derivacion?.EspecialidadRequerida ?? cita.Doctor?.Especialidad ?? "N/A")</td>
+                                                <td class="px-3 py-3 text-sm text-gray-600">@LaboratorioFront.Services.Etiquetas.Doctor(cita.Doctor?.Nombre ?? "N/A")</td>
+                                                <td class="px-3 py-3 text-center">
+                                                    <span class="px-2 py-1 rounded-md font-bold text-xs @ClaseEstadoSub(cita.Estado)">@EtiquetaEstadoSub(cita.Estado)</span>
+                                                </td>
+                                                <td class="px-3 py-3 text-sm text-gray-500">@(cita.FechaRegistro.HasValue ? cita.FechaRegistro.Value.ToString("dd/MM/yyyy") : "")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-4">
+                                <button disabled="@(paginaSubAgendados <= 1)" @onclick="AnteriorPaginaSubAgendados" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                                    <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                                </button>
+                                <span class="text-sm text-gray-600">Página @paginaSubAgendados de @totalPaginasSubAgendados</span>
+                                <button disabled="@(paginaSubAgendados >= totalPaginasSubAgendados)" @onclick="SiguientePaginaSubAgendados" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                                    Siguiente <i class="fa-solid fa-chevron-right ml-1"></i>
+                                </button>
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -1395,22 +1470,165 @@
         public class BotConfigDto {
         public int DiasAnticipacion { get; set; } = 7;
         public int DiasMaximos { get; set; } = 14;
+        public string EspecialidadesStandby { get; set; } = "";
     }
     
     private int diasAnticipacion = 7;
     private int diasMaximos = 14;
     private string configMessage = "";
 
-
+    private BotConfigDto botConfig = new();
+    private List<string> todasEspecialidadesBot = new();
+    private bool cargandoEspecialidadesBot = false;
+    private bool showConfigSaved = false;
+    private string configBotError = "";
+    private bool configLeida = false;
 
     private async Task CargarConfigBot()
     {
+        cargandoEspecialidadesBot = true;
+        configBotError = "";
         try
         {
             var conf = await Http.GetFromJsonAsync<BotConfigDto>("api/BotDerivaciones/config");
-            if (conf != null) { diasAnticipacion = conf.DiasAnticipacion; diasMaximos = conf.DiasMaximos; }
+            if (conf != null)
+            {
+                botConfig = conf;
+                diasAnticipacion = conf.DiasAnticipacion;
+                diasMaximos = conf.DiasMaximos;
+                configLeida = true;
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            configLeida = false;
+            configBotError = "No se pudo leer la configuración del bot: " + ex.Message;
+        }
+
+        try
+        {
+            var stats = await Http.GetFromJsonAsync<List<LaboratorioFront.Shared.BotDashboardTab.BotStat>>("api/BotDashboard/stats") ?? new();
+            var desdeStats = stats.Select(s => s.Especialidad).Where(e => !string.IsNullOrEmpty(e)).Distinct().ToList();
+
+            var listaFinal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var esp in desdeStats) listaFinal.Add(esp);
+            if (especialidades != null)
+            {
+                foreach (var esp in especialidades) listaFinal.Add(esp);
+            }
+            todasEspecialidadesBot = listaFinal.OrderBy(e => e).ToList();
+        }
+        catch
+        {
+            if (especialidades != null && especialidades.Any())
+            {
+                todasEspecialidadesBot = especialidades.OrderBy(e => e).ToList();
+            }
+        }
+        finally
+        {
+            cargandoEspecialidadesBot = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool EstaPausada(string especialidad)
+    {
+        return (botConfig.EspecialidadesStandby ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Any(s => s.Trim().Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task OnStandbyChanged(string especialidad, object? isCheckedObj)
+    {
+        if (!configLeida)
+        {
+            configBotError = "La configuración no está cargada; recarga la página antes de cambiarla.";
+            return;
+        }
+
+        bool isEnabled = (bool)(isCheckedObj ?? false);
+        var standbyList = (botConfig.EspecialidadesStandby ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+
+        if (isEnabled) {
+            standbyList.RemoveAll(s => s.Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase));
+        } else {
+            if (!standbyList.Any(s => s.Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase))) {
+                standbyList.Add(especialidad.Trim());
+            }
+        }
+
+        configBotError = "";
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/BotDerivaciones/config", new { EspecialidadesStandby = string.Join(",", standbyList) });
+            if (!response.IsSuccessStatusCode)
+            {
+                configBotError = "No se pudo guardar: " + await response.Content.ReadAsStringAsync();
+                return;
+            }
+            botConfig = await response.Content.ReadFromJsonAsync<BotConfigDto>() ?? botConfig;
+        }
+        catch (Exception ex)
+        {
+            configBotError = "No se pudo guardar: " + ex.Message;
+            return;
+        }
+
+        showConfigSaved = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        showConfigSaved = false;
+        StateHasChanged();
+    }
+
+    private async Task HabilitarTodasEspecialidades()
+    {
+        configBotError = "";
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/BotDerivaciones/config", new { EspecialidadesStandby = "" });
+            if (!response.IsSuccessStatusCode)
+            {
+                configBotError = "No se pudo habilitar todas: " + await response.Content.ReadAsStringAsync();
+                return;
+            }
+            botConfig.EspecialidadesStandby = "";
+            showConfigSaved = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            showConfigSaved = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            configBotError = "Error al habilitar todas: " + ex.Message;
+        }
+    }
+
+    private async Task DeshabilitarTodasEspecialidades()
+    {
+        configBotError = "";
+        try
+        {
+            var todas = string.Join(",", todasEspecialidadesBot ?? new List<string>());
+            var response = await Http.PostAsJsonAsync("api/BotDerivaciones/config", new { EspecialidadesStandby = todas });
+            if (!response.IsSuccessStatusCode)
+            {
+                configBotError = "No se pudo deshabilitar todas: " + await response.Content.ReadAsStringAsync();
+                return;
+            }
+            botConfig.EspecialidadesStandby = todas;
+            showConfigSaved = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            showConfigSaved = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            configBotError = "Error al deshabilitar todas: " + ex.Message;
+        }
     }
 
         private async Task ExportarExpirados()
@@ -1721,6 +1939,28 @@
 
     private static string EtiquetaEstadoSub(string? estado) => estado == "No Asistio" ? "No asistió" : (estado ?? "");
 
+    private string subTabSubsecuentes = "pendientes";
+
+    private async Task CambiarSubTabSubsecuentes(string subTab)
+    {
+        subTabSubsecuentes = subTab;
+        if (subTab == "pendientes")
+        {
+            if (citasSinSubsecuente == null)
+            {
+                await CargarSinSubsecuente();
+            }
+        }
+        else if (subTab == "agendados")
+        {
+            if (subAgendadosServer == null || subAgendadosServer.Count == 0)
+            {
+                paginaSubAgendados = 1;
+                await CargarSubAgendados();
+            }
+        }
+    }
+
     private async Task SetTab(string tab)
     {
         currentTab = tab;
@@ -1734,25 +1974,34 @@
         {
             await CargarEstadoBot();
         }
-        else if (tab == "subagendados")
-        {
-            paginaSubAgendados = 1;
-            await CargarSubAgendados();
-        }
         else if (tab == "bot")
         {
             await CargarEstadoEnvio();
+            await CargarConfigBot();
         }
         else if (tab == "procedimientos")
         {
             await CargarProcedimientosServer();
         }
-        else if (tab == "subsecuentes")
+        else if (tab == "subsecuentes" || tab == "subagendados")
         {
-            citasSinSubsecuente = null;
-            citasSinSubsecuenteFiltradas = null;
-            StateHasChanged();
-            await CargarSinSubsecuente();
+            currentTab = "subsecuentes";
+            if (tab == "subagendados")
+            {
+                subTabSubsecuentes = "agendados";
+            }
+            if (subTabSubsecuentes == "pendientes")
+            {
+                citasSinSubsecuente = null;
+                citasSinSubsecuenteFiltradas = null;
+                StateHasChanged();
+                await CargarSinSubsecuente();
+            }
+            else
+            {
+                paginaSubAgendados = 1;
+                await CargarSubAgendados();
+            }
         }
     }
 
@@ -2177,6 +2426,14 @@ Tu salud es nuestra prioridad.";
                 {
                     mostrarModal = false;
                     await Cargardatos();
+                    if (currentTab == "subsecuentes")
+                    {
+                        await CargarSinSubsecuente();
+                        if (subAgendadosServer != null)
+                        {
+                            await CargarSubAgendados();
+                        }
+                    }
                     await JS.InvokeVoidAsync("alert", "Cita agendada correctamente.");
                 }
                 else

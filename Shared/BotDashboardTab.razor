@@ -1,4 +1,4 @@
-﻿@using System.Net.Http.Json
+@using System.Net.Http.Json
 @inject HttpClient Http
 
 <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -41,34 +41,6 @@
                 </div>
             }
         </div>
-        
-        <div class="mt-6 border-t border-gray-200 pt-4">
-            <h4 class="text-md font-bold text-gray-700 mb-2"><i class="fa-solid fa-gears text-gray-500 mr-2"></i> Especialidades Habilitadas para Agendamiento</h4>
-            <p class="text-xs text-gray-500 mb-4">El bot solo asignará turnos automáticamente a las especialidades marcadas. Las desmarcadas se quedarán en estado 'Standby / Pausado'.</p>
-            
-            @if (config != null && todasEspecialidades.Any())
-            {
-                <div class="flex flex-wrap gap-3 mb-2">
-                    @foreach(var esp in todasEspecialidades)
-                    {
-                        bool isChecked = !EstaPausada(esp);
-                        <label class="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                            <input type="checkbox" checked="@isChecked" @onchange="@(e => OnStandbyChanged(esp, e.Value))" class="w-4 h-4 text-turquesa-600 bg-gray-100 border-gray-300 rounded focus:ring-turquesa-500" />
-                            <span class="text-sm font-semibold text-gray-700">@esp</span>
-                        </label>
-                    }
-                </div>
-                
-                @if(showConfigSaved) {
-                    <span class="text-green-600 text-xs font-bold transition-opacity">¡Configuración guardada!</span>
-                }
-            }
-
-            @if (!string.IsNullOrEmpty(configError))
-            {
-                <p class="text-red-600 text-xs font-bold mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> @configError</p>
-            }
-        </div>
     }
     else
     {
@@ -79,22 +51,12 @@
 @code {
     private bool isLoading = true;
     private List<BotStat> stats = new();
-
-        private BotConfig config = new();
-    private List<string> todasEspecialidades = new();
-    private bool showConfigSaved = false;
-
-    public class BotConfig {
-        public int DiasAnticipacion { get; set; } = 7;
-        public string EspecialidadesStandby { get; set; } = "";
-    }
+    private string configError = "";
 
     protected override async Task OnInitializedAsync()
     {
         await CargarStats();
     }
-
-    private string configError = "";
 
     private async Task CargarStats()
     {
@@ -103,81 +65,15 @@
         try
         {
             stats = await Http.GetFromJsonAsync<List<BotStat>>("api/BotDashboard/stats") ?? new();
-            todasEspecialidades = stats.Select(s => s.Especialidad).Where(e => !string.IsNullOrEmpty(e)).Distinct().OrderBy(e => e).ToList();
         }
         catch (Exception ex)
         {
             configError = "No se pudieron cargar las estadísticas: " + ex.Message;
         }
-
-        try
+        finally
         {
-            config = await Http.GetFromJsonAsync<BotConfig>("api/BotDerivaciones/config") ?? new BotConfig();
-        }
-        catch (Exception ex)
-        {
-            // Si no se puede leer la configuración NO se debe permitir guardar: se pisaría la lista real con una vacía
-            configLeida = false;
-            configError = "No se pudo leer la configuración del bot: " + ex.Message;
             isLoading = false;
-            return;
         }
-        configLeida = true;
-        isLoading = false;
-    }
-
-    private bool configLeida = false;
-
-    // Una especialidad está pausada solo si su nombre coincide exactamente con uno de la lista (no por "contiene")
-    private bool EstaPausada(string especialidad)
-    {
-        return (config.EspecialidadesStandby ?? "")
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Any(s => s.Trim().Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase));
-    }
-
-    private async Task OnStandbyChanged(string especialidad, object isCheckedObj)
-    {
-        if (!configLeida)
-        {
-            configError = "La configuración no está cargada; pulsa Actualizar antes de cambiarla.";
-            return;
-        }
-
-        bool isEnabled = (bool)isCheckedObj;
-        var standbyList = (config.EspecialidadesStandby ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
-
-        if (isEnabled) {
-            standbyList.RemoveAll(s => s.Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase));
-        } else {
-            if (!standbyList.Any(s => s.Equals(especialidad.Trim(), StringComparison.OrdinalIgnoreCase))) {
-                standbyList.Add(especialidad.Trim());
-            }
-        }
-
-        configError = "";
-        try
-        {
-            // Se envía solo la lista de especialidades; los días de anticipación no se tocan
-            var response = await Http.PostAsJsonAsync("api/BotDerivaciones/config", new { EspecialidadesStandby = string.Join(",", standbyList) });
-            if (!response.IsSuccessStatusCode)
-            {
-                configError = "No se pudo guardar: " + await response.Content.ReadAsStringAsync();
-                return;
-            }
-            config = await response.Content.ReadFromJsonAsync<BotConfig>() ?? config;
-        }
-        catch (Exception ex)
-        {
-            configError = "No se pudo guardar: " + ex.Message;
-            return;
-        }
-
-        showConfigSaved = true;
-        StateHasChanged();
-        await Task.Delay(2000);
-        showConfigSaved = false;
-        StateHasChanged();
     }
 
     private string FormatEstado(string estado)
