@@ -17,29 +17,23 @@
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "lista" ? "bg-turquesa-50 text-turquesa-700 shadow-sm border border-turquesa-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("lista"))">
                  <i class="fa-solid fa-list w-5 text-center @(currentTab == "lista" ? "text-turquesa-600" : "text-gray-400")"></i> Lista Derivaciones
             </button>
-            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "nueva" ? "bg-turquesa-50 text-turquesa-700 shadow-sm border border-turquesa-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("nueva"))">
-                <i class="fa-solid fa-notes-medical w-5 text-center @(currentTab == "nueva" ? "text-turquesa-600" : "text-gray-400")"></i> Nueva Derivacion
-            </button>
-            
-            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "bot" ? "bg-green-50 text-green-700 shadow-sm border border-green-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("bot"))">
-                <i class="fa-brands fa-whatsapp w-5 text-center @(currentTab == "bot" ? "text-green-600" : "text-gray-400")"></i> Carga Bot WhatsApp
-            </button>
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "agenda" ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("agenda"))">
-                <i class="fa-solid fa-calendar-days w-5 text-center @(currentTab == "agenda" ? "text-purple-600" : "text-gray-400")"></i> Agenda Diaria
+                 <i class="fa-solid fa-calendar-days w-5 text-center @(currentTab == "agenda" ? "text-purple-600" : "text-gray-400")"></i> Agenda Diaria
             </button>
-<button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "citas" ? "bg-turquesa-50 text-turquesa-700 shadow-sm border border-turquesa-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("citas"))">
-                <i class="fa-solid fa-calendar-check w-5 text-center @(currentTab == "citas" ? "text-turquesa-600" : "text-gray-400")"></i> Citas Generadas
+            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "bot" ? "bg-green-50 text-green-700 shadow-sm border border-green-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("bot"))">
+                 <i class="fa-brands fa-whatsapp w-5 text-center @(currentTab == "bot" ? "text-green-600" : "text-gray-400")"></i> Bot WhatsApp
             </button>
-            
-            
+            <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "citas" ? "bg-turquesa-50 text-turquesa-700 shadow-sm border border-turquesa-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("citas"))">
+                 <i class="fa-solid fa-calendar-check w-5 text-center @(currentTab == "citas" ? "text-turquesa-600" : "text-gray-400")"></i> Citas Generadas
+            </button>
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "no-atendidos" ? "bg-red-50 text-red-700 shadow-sm border border-red-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("no-atendidos"))">
-                <i class="fa-solid fa-calendar-xmark w-5 text-center @(currentTab == "no-atendidos" ? "text-red-600" : "text-gray-400")"></i> No Atendidos
+                 <i class="fa-solid fa-calendar-xmark w-5 text-center @(currentTab == "no-atendidos" ? "text-red-600" : "text-gray-400")"></i> No Atendidos
             </button>
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "procedimientos" ? "bg-blue-50 text-blue-700 shadow-sm border border-blue-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("procedimientos"))">
-                <i class="fa-solid fa-heart-pulse w-5 text-center @(currentTab == "procedimientos" ? "text-blue-600" : "text-gray-400")"></i> Procedimientos
+                 <i class="fa-solid fa-heart-pulse w-5 text-center @(currentTab == "procedimientos" ? "text-blue-600" : "text-gray-400")"></i> Procedimientos
             </button>
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "subsecuentes" ? "bg-orange-50 text-orange-700 shadow-sm border border-orange-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("subsecuentes"))">
-                <i class="fa-solid fa-clock-rotate-left w-5 text-center @(currentTab == "subsecuentes" ? "text-orange-600" : "text-gray-400")"></i> Subsecuentes
+                 <i class="fa-solid fa-clock-rotate-left w-5 text-center @(currentTab == "subsecuentes" ? "text-orange-600" : "text-gray-400")"></i> Subsecuentes
             </button>
             <div class="mt-auto hidden md:block pt-4 border-t border-gray-100">
 
@@ -267,7 +261,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-2">
                         <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabBot == "carga" ? "bg-green-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabBot("carga"))">
-                            <i class="fa-brands fa-whatsapp"></i> Carga Bot WhatsApp
+                            <i class="fa-brands fa-whatsapp"></i> Bot WhatsApp
                         </button>
                         <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabBot == "estadobot" ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabBot("estadobot"))">
                             <i class="fa-solid fa-robot"></i> Estado Bot WhatsApp
