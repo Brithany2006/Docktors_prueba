@@ -1,23 +1,23 @@
 ﻿window.laboratorio = window.laboratorio || {};
 
 laboratorio.setRol = function (rol) {
-    localStorage.setItem("rol", rol);
+    sessionStorage.setItem("rol", rol);
 };
 
 laboratorio.getRol = function () {
-    return localStorage.getItem("rol");
+    return sessionStorage.getItem("rol");
 };
 
 laboratorio.setToken = function (token) {
-    localStorage.setItem("token", token);
+    sessionStorage.setItem("token", token);
 };
 
 laboratorio.getToken = function () {
-    return localStorage.getItem("token");
+    return sessionStorage.getItem("token");
 };
 
 laboratorio.removeToken = function () {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
 };
 
 
