@@ -363,7 +363,12 @@
         } catch { }
 
         await CargarPacientes();
-        try { doctores = await DerivService.GetDoctoresAsync(); } catch { }
+        try 
+        { 
+            var listaCompleta = await DerivService.GetDoctoresAsync();
+    doctores = listaCompleta.Where(d => d.Sucursal == "Centro").ToList(); 
+            } 
+            catch { }
     }
 
     private byte[] ParseBase64WithoutPadding(string base64)

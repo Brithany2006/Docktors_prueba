@@ -29,7 +29,7 @@ public class AuthService
             var token = tokenProp.GetString();
             if (!string.IsNullOrEmpty(token))
             {
-                await _js.InvokeVoidAsync("localStorage.setItem", TokenKey, token);
+                await _js.InvokeVoidAsync("sessionStorage.setItem", TokenKey, token);
                 // opcional: extraer y guardar RUC si lo necesitas
                 return true;
             }
@@ -40,12 +40,12 @@ public class AuthService
 
     public async Task<string?> GetTokenAsync()
     {
-        return await _js.InvokeAsync<string>("localStorage.getItem", TokenKey);
+        return await _js.InvokeAsync<string>("sessionStorage.getItem", TokenKey);
     }
 
     public async Task LogoutAsync()
     {
-        await _js.InvokeVoidAsync("localStorage.removeItem", TokenKey);
-        await _js.InvokeVoidAsync("localStorage.removeItem", RucKey);
+        await _js.InvokeVoidAsync("sessionStorage.removeItem", TokenKey);
+        await _js.InvokeVoidAsync("sessionStorage.removeItem", RucKey);
     }
 } 

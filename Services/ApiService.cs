@@ -13,6 +13,12 @@ namespace LaboratorioFront.Services;
 
 public class ApiService
 {
+	public class EmpresaDto
+{
+    public int IdEmpresa { get; set; }
+    public string Ruc { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+}
 	public class PacientePdf
 	{
 		public int Id { get; set; }
@@ -608,5 +614,24 @@ public class ApiService
 	public string GetBaseUrl()
 	{
 		return new Uri((_http.BaseAddress ?? new Uri("https://doktors.med.ec/api/")).GetLeftPart(UriPartial.Authority)).ToString().TrimEnd('/');
+	}
+	public async Task<EmpresaDto?> GetEmpresaPorRucAsync(string ruc)
+	{
+		try
+		{
+			HttpResponseMessage httpResponseMessage = await _http.GetAsync("admin/empresas/ruc/" + Uri.EscapeDataString(ruc));
+			if (!httpResponseMessage.IsSuccessStatusCode)
+			{
+				return null;
+			}
+			return JsonSerializer.Deserialize<EmpresaDto>(await httpResponseMessage.Content.ReadAsStringAsync(), new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			});
+		}
+		catch
+		{
+			return null;
+		}
 	}
 }

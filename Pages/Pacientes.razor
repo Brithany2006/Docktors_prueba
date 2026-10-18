@@ -461,9 +461,8 @@
         }
 
         ExtraerDatosEmpresa(token);
-
         Api.SetToken(token);
-        
+
         // Cargamos ambas fuentes de datos en paralelo
         var taskOdoo = Api.GetMisResultadosExternosAsync();
         var taskLegacy = Api.GetPacientesPorCarpetaAsync();
@@ -472,6 +471,61 @@
         
         citas = taskOdoo.Result;
         pacientesAntiguos = taskLegacy.Result;
+
+        // SI NO ENCONTRÓ EL NOMBRE EN EL TOKEN, CONSULTAMOS LA LISTA DE EMPRESAS DE LA API
+        if (nombreEmpresa == "Empresa Cliente" || nombreEmpresa == "Nombre del Paciente / Empresa")
+        {
+            try
+            {
+                var listaEmpresas = await Api.GetEmpresasConPacientesAsync();
+                var emp = listaEmpresas?.FirstOrDefault(e => e.Ruc != null && e.Ruc.Trim() == rucEmpresa.Trim());
+                if (emp != null && !string.IsNullOrEmpty(emp.NombreEmpresa))
+                {
+                    nombreEmpresa = emp.NombreEmpresa;
+                }
+            }
+            catch { }
+        }
+    }
+
+        private void ExtraerDatosEmpresa(string token)
+    {
+        try
+        {
+            var payload = token.Split('.')[1];
+            var payloadStr = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(payload)));
+            var payloadJson = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(payloadStr);
+            if (payloadJson != null)
+            {
+                // Intentamos leer el RUC
+                var rucClaim = payloadJson.FirstOrDefault(x =>
+                    x.Key.Equals("RUC", StringComparison.OrdinalIgnoreCase) ||
+                    x.Key.Equals("username", StringComparison.OrdinalIgnoreCase) ||
+                    x.Key.Equals("unique_name", StringComparison.OrdinalIgnoreCase)
+                ).Value?.ToString();
+                
+                if (!string.IsNullOrEmpty(rucClaim))
+                {
+                    rucEmpresa = rucClaim;
+                }
+
+                // Buscamos cualquier claim que tenga el Nombre
+                var nameClaim = payloadJson.FirstOrDefault(x =>
+                    x.Key.Equals("Nombre", StringComparison.OrdinalIgnoreCase) ||
+                    x.Key.Equals("RazonSocial", StringComparison.OrdinalIgnoreCase) ||
+                    x.Key.Equals("NombreEmpresa", StringComparison.OrdinalIgnoreCase) ||
+                    x.Key.Equals("name", StringComparison.OrdinalIgnoreCase) ||
+                    x.Key.EndsWith("/name", StringComparison.OrdinalIgnoreCase)
+                ).Value?.ToString();
+                
+                // Si existe el claim del nombre y no es igual al RUC, lo asignamos
+                if (!string.IsNullOrEmpty(nameClaim) && nameClaim != rucEmpresa)
+                {
+                    nombreEmpresa = nameClaim.Replace("_", " ");
+                }
+            }
+        }
+        catch { }
     }
 
     private async Task VerPdfAntiguo(string nombreArchivo)
@@ -510,37 +564,6 @@
         mostrarModalLegacy = false;
     }
 
-    private void ExtraerDatosEmpresa(string token)
-    {
-        try
-        {
-            var payload = token.Split('.')[1];
-            var payloadStr = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(payload)));
-            var payloadJson = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(payloadStr);
-            if (payloadJson != null)
-            {
-                // Buscamos directamente "Nombre" primero
-                var nameClaim = payloadJson.FirstOrDefault(x =>
-                    x.Key.Equals("Nombre", StringComparison.OrdinalIgnoreCase) || 
-                    x.Key.Equals("unique_name", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
-                
-                if (!string.IsNullOrEmpty(nameClaim))
-                {
-                    nombreEmpresa = nameClaim.Replace("_", " ");
-                }
-
-                var rucClaim = payloadJson.FirstOrDefault(x =>
-                    x.Key.Equals("RUC", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
-                
-                if (!string.IsNullOrEmpty(rucClaim))
-                {
-                    rucEmpresa = rucClaim;
-                }
-            }
-        }
-        catch { }
-    }
-
     private string PadBase64(string base64)
     {
         switch (base64.Length % 4)
@@ -559,4 +582,3 @@
         }
     }
 }
-
