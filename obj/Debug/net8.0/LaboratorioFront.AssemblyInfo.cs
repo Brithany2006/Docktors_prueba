@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LaboratorioFront")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+529be29af66bead9786d17db7a656245d45adf80")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+71ea7495eb4fe28c39aa0be600414e804809ab6d")]
 [assembly: System.Reflection.AssemblyProductAttribute("LaboratorioFront")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LaboratorioFront")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
