@@ -892,6 +892,6 @@ C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\Labo
 C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\refint\LaboratorioFront.dll
 C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\LaboratorioFront.pdb
 C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\ref\LaboratorioFront.dll
-C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\compressed\wf6iwc5mih-{0}-ltlfiecumu-ltlfiecumu.gz
-C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\compressed\m5vyu78ubw-{0}-qyzaqaqsng-qyzaqaqsng.gz
-C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\compressed\e4wyatun2b-{0}-kfihsk5eqm-kfihsk5eqm.gz
+C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\compressed\wf6iwc5mih-{0}-zxag7bfqmt-zxag7bfqmt.gz
+C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\compressed\m5vyu78ubw-{0}-9ae1dwzgk1-9ae1dwzgk1.gz
+C:\Users\Admin\Documents\Doktors_Practica\Doktors_Practica\obj\Debug\net8.0\compressed\e4wyatun2b-{0}-u4e0d9iehl-u4e0d9iehl.gz

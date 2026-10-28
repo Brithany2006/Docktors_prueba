@@ -1,8 +1,9 @@
-@inject HttpClient Http
+﻿@inject HttpClient Http
 @page "/dashboard-derivaciones"
 @using LaboratorioFront.Services
 @inject DerivacionesService Service
 @inject NavigationManager Nav
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <div class="admin-layout flex flex-col md:flex-row min-h-screen bg-gray-50 font-sans">
     <aside class="w-full md:w-64 bg-white shadow-md flex-shrink-0 flex flex-col md:min-h-screen p-4 border-r border-gray-200">
@@ -12,8 +13,8 @@
             </div>
             <h2 class="text-xl font-bold text-turquesa-900 hidden md:block">Derivaciones</h2>
         </div>
-        
-        <div class="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+
+<div class="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
             <button class="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap @(currentTab == "lista" ? "bg-turquesa-50 text-turquesa-700 shadow-sm border border-turquesa-100" : "text-gray-600 hover:bg-gray-100")" @onclick="@(() => SetTab("lista"))">
                  <i class="fa-solid fa-list w-5 text-center @(currentTab == "lista" ? "text-turquesa-600" : "text-gray-400")"></i> Lista Derivaciones
             </button>
@@ -36,7 +37,6 @@
                  <i class="fa-solid fa-clock-rotate-left w-5 text-center @(currentTab == "subsecuentes" ? "text-orange-600" : "text-gray-400")"></i> Subsecuentes
             </button>
             <div class="mt-auto hidden md:block pt-4 border-t border-gray-100">
-
                 <button class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors" @onclick="Salir">
                     <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i> Salir
                 </button>
@@ -44,7 +44,8 @@
         </div>
     </aside>
 
-            @if (currentTab == "agenda")
+<main class="flex-grow p-3 md:p-4 overflow-y-auto min-w-0">
+    @if (currentTab == "agenda")
         {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Agenda Diaria de Doctores</h2>
@@ -128,48 +129,47 @@
                 }
             </div>
         }
-        <main class="flex-grow p-3 md:p-4 overflow-y-auto min-w-0">
-        @if (currentTab == "citas")
-        {
+        else if (currentTab == "citas")
+        {                
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Todas las Citas</h2>
                 
-<div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-    <div class="flex items-center gap-2">
-        <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
-            <i class="fa-solid fa-search text-gray-400 mx-3"></i>
-            <input type="text" value="@filtroCitas" @oninput="OnSearchCitasInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
-        </div>
-        <button @onclick="() => mostrarFiltrosCitas = !mostrarFiltrosCitas" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2">
-            <i class="fa-solid fa-filter"></i> Filtros
-        </button>
-    </div>
-    @if (mostrarFiltrosCitas)
-    {
-        <div class="mt-4 pt-4 border-t border-gray-200 flex flex-col md:flex-row gap-4 items-center">
-            <div class="flex items-center gap-2">
-                <label class="text-sm font-semibold text-gray-700">Fecha:</label>
-                <input type="date" value="@(filtroCitaFecha?.ToString("yyyy-MM-dd"))" @onchange="OnFiltroFechaChanged" class="px-3 py-2 border border-gray-300 rounded-lg outline-none" />
-            </div>
-            <div class="flex items-center gap-2">
-                <label class="text-sm font-semibold text-gray-700">Doctor:</label>
-                <select value="@filtroCitaDoctorId" @onchange="OnFiltroDoctorChanged" class="px-3 py-2 border border-gray-300 rounded-lg outline-none max-w-xs">
-                    <option value="">Todos los doctores</option>
-                    @if (doctores != null)
+                <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                            <i class="fa-solid fa-search text-gray-400 mx-3"></i>
+                            <input type="text" value="@filtroCitas" @oninput="OnSearchCitasInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
+                        </div>
+                        <button @onclick="() => mostrarFiltrosCitas = !mostrarFiltrosCitas" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-filter"></i> Filtros
+                        </button>
+                    </div>
+                    @if (mostrarFiltrosCitas)
                     {
+        <div class="mt-4 pt-4 border-t border-gray-200 flex flex-col md:flex-row gap-4 items-center">
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-semibold text-gray-700">Fecha:</label>
+                                <input type="date" value="@(filtroCitaFecha?.ToString("yyyy-MM-dd"))" @onchange="OnFiltroFechaChanged" class="px-3 py-2 border border-gray-300 rounded-lg outline-none" />
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm font-semibold text-gray-700">Doctor:</label>
+                                <select value="@filtroCitaDoctorId" @onchange="OnFiltroDoctorChanged" class="px-3 py-2 border border-gray-300 rounded-lg outline-none max-w-xs">
+                                    <option value="">Todos los doctores</option>
+                                    @if (doctores != null)
+                                    {
                         @foreach (var doc in doctores)
-                        {
-                            <option value="@doc.Id">@doc.Nombre (@doc.Especialidad)</option>
-                        }
+                                        {
+                                            <option value="@doc.Id">@doc.Nombre (@doc.Especialidad)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <button @onclick="LimpiarFiltrosCitas" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors">
+                                Limpiar
+                            </button>
+                        </div>
                     }
-                </select>
-            </div>
-            <button @onclick="LimpiarFiltrosCitas" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors">
-                Limpiar
-            </button>
-        </div>
-    }
-</div>
+                </div>
                 @if (citasServer == null)
                 {
                     <div class="flex justify-center items-center py-12 text-turquesa-600">
@@ -221,17 +221,7 @@
                                             else
                                             {
                                                 <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-bold border border-gray-200">@cita.Estado</span>
-                                            
-<div class="flex flex-row justify-center gap-2 mt-2">
-                                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" @onclick="() => AbrirEditarCita(cita)" title="Editar Cita">
-                                                        <i class="fa-solid fa-pen"></i>
-                                                    </button>
-                                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" @onclick="() => BorrarCita(cita.Id)" title="Borrar Cita">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </button>
-                                                </div>
                                             }
-
                                         </td>
                                         <td class="px-3 py-3 text-center whitespace-nowrap">
                                             <div class="flex items-center justify-center gap-2">
@@ -415,7 +405,7 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6"><i class="fa-brands fa-whatsapp text-green-500 mr-2"></i> Carga de Archivos para Bot (WhatsApp)</h2>
                 <p class="text-gray-600 mb-6">Sube el archivo Excel (.xlsx) generado por tu programa de escritorio para procesar las derivaciones.</p>
                 
-                                <div class="p-4 border-2 border-dashed border-gray-300 rounded-xl bg-green-50 mb-6">
+                <div class="p-4 border-2 border-dashed border-gray-300 rounded-xl bg-green-50 mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Archivo Excel (.xlsx)</label>
                     <InputFile OnChange="HandleExcelSelected" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-800 hover:file:bg-green-200" accept=".xlsx" />
                     @if (excelBot != null) {
@@ -490,7 +480,8 @@
                             }
                         </div>
 
-                        @if(showConfigSaved) {
+                        @if(showConfigSaved) 
+                        {
                             <span class="text-green-600 text-xs font-bold transition-opacity">¡Configuración guardada!</span>
                         }
                     }
@@ -517,13 +508,14 @@
                             <i class="fa-solid fa-save"></i> Guardar
                         </button>
                     </div>
-                    @if(!string.IsNullOrEmpty(configMessage)) {
+                    @if(!string.IsNullOrEmpty(configMessage)) 
+                    {
                         <p class="mt-2 text-sm font-semibold text-orange-800">@configMessage</p>
                     }
                 </div>
 
                 <div class="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-200">
-                                        <h4 class="text-lg font-bold text-blue-800 mb-2"><i class="fa-solid fa-robot mr-2"></i> Forzar Ejecucion del Bot</h4>
+                    <h4 class="text-lg font-bold text-blue-800 mb-2"><i class="fa-solid fa-robot mr-2"></i> Forzar Ejecucion del Bot</h4>
                     <p class="text-sm text-blue-600 mb-3"><strong>Nada se envía solo.</strong> Paso 1: "Ejecutar Bot Ahora" asigna turnos a los pacientes nuevos. Paso 2: "Enviar WhatsApp" envía los mensajes de los turnos asignados (hasta 125 por clic, respetando el tope diario de Meta). "Enviar recordatorios" reenvía el mensaje, una sola vez, a quienes no han confirmado y tienen cita en las próximas 24 horas.</p>
                     <div class="flex flex-wrap gap-4 items-center">
                         <select @bind="unidadBotEjecucion" class="px-3 py-2 border border-blue-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white text-blue-800 font-semibold shadow-sm">
@@ -545,7 +537,6 @@
             <i class="fa-brands fa-whatsapp"></i> <span>Enviar WhatsApp</span>
         }
     </button>
-
     <button @onclick="EnviarRecordatoriosManual" disabled="@isEnvioWhatsAppRunning" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow-sm disabled:opacity-50 transition-colors flex items-center gap-2" title="Reenvía el mensaje, una sola vez, a quienes no confirmaron y tienen cita en las próximas 24 horas">
         <i class="fa-regular fa-bell"></i> <span>Enviar recordatorios</span>
     </button>
@@ -563,25 +554,26 @@
                             &nbsp;|&nbsp; Cupo disponible: <strong>@estadoEnvio.CupoDisponible</strong>
                         </p>
                     }
-                    @if(!string.IsNullOrEmpty(botMessage)) {
+                        @if(!string.IsNullOrEmpty(botMessage)) {
                         <p class="mt-2 text-sm font-semibold text-blue-800">@botMessage</p>
                     }
                 </div>
             </div>
-                }
-            </div>
         }
-        
+    </div>
+        }
         else if (currentTab == "no-atendidos")
         {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Citas No Atendidas / No Asistio</h2>
-
-                <div class="mb-4 flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                <div class="mb-4 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div class="flex-1 w-full flex items-center bg-white p-2 rounded-lg border border-gray-200">
                         <i class="fa-solid fa-search text-gray-400 mx-3"></i>
                         <input type="text" value="@filtroNoAtendidos" @oninput="OnSearchNoAtendidosInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
                     </div>
+                    <button @onclick="ExportarNoAtendidosExcel" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-excel"></i> Exportar a Excel
+                    </button>
                 </div>
 
                 @if (citasServer == null)
@@ -642,17 +634,15 @@
             </div>
         }
         else if (currentTab == "lista")
-
         {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Derivaciones Activas</h2>
-                
-<div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-    <div class="flex items-center gap-2">
-        <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
-            <i class="fa-solid fa-search text-gray-400 mx-3"></i>
-            <input type="text" value="@filtroDerivaciones" @oninput="OnSearchDerivacionesInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
-        </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Derivaciones Activas</h2>       
+            <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                        <i class="fa-solid fa-search text-gray-400 mx-3"></i>
+                        <input type="text" value="@filtroDerivaciones" @oninput="OnSearchDerivacionesInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
+                    </div>
         <button @onclick="() => mostrarFiltrosDerivaciones = !mostrarFiltrosDerivaciones" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2">
             <i class="fa-solid fa-filter"></i> Filtros
         </button>
@@ -760,8 +750,7 @@
             var procPaginas = procEco ? totalPaginasEcoServer : totalPaginasEkgServer;
             var procNombre = procEco ? "Ecocardiograma" : "EKG";
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Procedimientos</h2>
-
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Procedimientos</h2
                 <div class="flex flex-wrap gap-2 mb-5 pb-4 border-b border-gray-100">
                     <button @onclick='() => SetProcTab("ekg")' class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all @(!procEco ? "bg-blue-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
                         <i class="fa-solid fa-heart-pulse"></i> Electrocardiograma (EKG)
@@ -776,8 +765,8 @@
                 <h3 class="text-lg font-bold text-gray-800 mb-1">Derivaciones de @procNombre</h3>
                 <p class="text-sm text-gray-500 mb-4">@(procEco ? "Las citas de ecocardiograma duran 45 minutos." : "Las citas de EKG duran 10 minutos.")</p>
 
-                <div class="mb-4 flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                <div class="mb-4 flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
                         <i class="fa-solid fa-search text-gray-400 mx-3"></i>
                         <input type="text" value="@procFiltro" @oninput="OnSearchProcInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
                     </div>
@@ -827,34 +816,45 @@
                                 </div>
                             }
                         </div>
-
                         @if (procPaginas > 1)
                         {
                             <div class="flex items-center justify-between mt-6">
-                                <button @onclick="AnteriorPaginaProc" disabled="@(procPagina <= 1)" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">Anterior</button>
-                                <span class="text-sm text-gray-600">Página @procPagina de @procPaginas</span>
-                                <button @onclick="SiguientePaginaProc" disabled="@(procPagina >= procPaginas)" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">Siguiente</button>
+                                <button @onclick="AnteriorPaginaProc"
+                                        disabled="@(procPagina <= 1)"
+                                        class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">
+                                    Anterior
+                                </button>
+                                <span class="text-sm text-gray-600">
+                                    Página @procPagina de @procPaginas
+                                </span>
+
+                                <button @onclick="SiguientePaginaProc" disabled="@(procPagina >= procPaginas)" class="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40">
+                                    Siguiente
+                                </button>
                             </div>
                         }
                     }
                 }
             </div>
         }
-                else if (currentTab == "subsecuentes")
+        else if (currentTab == "subsecuentes")
         {
             <div class="space-y-6">
                 <!-- Selector de sub-pestañas -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-2">
-                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabSubsecuentes == "pendientes" ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabSubsecuentes("pendientes"))">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Subsecuentes Pendientes
+                        <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabSubsecuentes == "pendientes" ? "bg-orange-500 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
+                                @onclick="@(() => CambiarSubTabSubsecuentes("pendientes"))">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            Subsecuentes Pendientes
                             @if (citasSinSubsecuenteFiltradas != null && citasSinSubsecuenteFiltradas.Count > 0)
                             {
                                 <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold @(subTabSubsecuentes == "pendientes" ? "bg-orange-600 text-white" : "bg-gray-200 text-gray-700")">@citasSinSubsecuenteFiltradas.Count</span>
                             }
                         </button>
                         <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all @(subTabSubsecuentes == "agendados" ? "bg-emerald-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")" @onclick="@(() => CambiarSubTabSubsecuentes("agendados"))">
-                            <i class="fa-solid fa-calendar-check"></i> Subsecuentes Agendados
+                            <i class="fa-solid fa-calendar-check"></i>
+                            Subsecuentes Agendados
                             @if (totalSubAgendados > 0)
                             {
                                 <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-bold @(subTabSubsecuentes == "agendados" ? "bg-emerald-700 text-white" : "bg-gray-200 text-gray-700")">@totalSubAgendados</span>
@@ -862,19 +862,54 @@
                         </button>
                     </div>
                 </div>
-
+    
                 @if (subTabSubsecuentes == "pendientes")
                 {
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Subsecuentes Pendientes</h2>
-
-                        <div class="mb-4 flex flex-col md:flex-row gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
+                        <!-- Buscador y Botón de Filtros -->
+                        <div class="mb-4 flex gap-3 items-center">
+                            <div class="flex-1 flex items-center bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
                                 <i class="fa-solid fa-search text-gray-400 mx-3"></i>
                                 <input type="text" value="@filtroSinSubsecuente" @oninput="OnSearchSinSubsecuenteInput" placeholder="Buscar por nombres, apellidos o cedula..." class="w-full bg-transparent outline-none text-gray-700" />
-                            </div>
-                        </div>
+                          </div>
+                          <button class="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl border border-gray-200 transition-colors" @onclick="ToggleMostrarFiltros">
+                                    <i class="fa-solid fa-filter"></i> Filtros
+                          </button>
+                     </div>
+<!-- Panel de Filtros -->
+                        @if (mostrarFiltros)
+                        {
+                            <div class="mb-6 bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Atendida desde:</label>
+                                        <input type="date" value="@(filtroFechaSubPendientes?.ToString("yyyy-MM-dd"))" @onchange="OnFiltroFechaSubPendientesChanged" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm text-gray-700" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Doctor que atendió:</label>
+                                    
+<select class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        value="@(filtroDoctorSubPendientes?.ToString() ?? "")"
+        @onchange="OnDoctorSubPendientesChanged">
 
+    <option value="">Todos los doctores</option>
+
+    @foreach (var doc in listaDoctores)
+    {
+        <option value="@doc.Id">@doc.Nombre</option>
+    }
+</select>
+       
+                                </div>
+                                <div class="flex justify-start">
+                                    <button class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold text-sm rounded-lg transition-colors" @onclick="LimpiarFechaSubPendientes">
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                      </div>
+                        }
                         @if (citasSinSubsecuente == null)
                         {
                             <div class="flex justify-center items-center py-12 text-turquesa-600">
@@ -901,7 +936,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var cita in citasSinSubsecuenteFiltradas)
+                                        @foreach (var cita in subPendientesPaginados)
                                         {
                                             <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                                                 <td class="px-3 py-3 text-sm font-medium text-gray-800">@cita.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
@@ -911,26 +946,52 @@
                                                 </td>
                                                 <td class="px-3 py-3 text-sm text-gray-600">@(cita.Doctor?.Nombre ?? "N/A")</td>
                                                 <td class="px-3 py-3 text-center whitespace-nowrap">
-                                                    @if(cita.Derivacion != null)
-                                                      {
-                                                          if (cita.Derivacion.Citas != null && cita.Derivacion.Citas.Any(c => c != null && c.Estado == "Pendiente" && c.Activo))
-                                                          {
-                                                              <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-lg border border-green-200">
-                                                                  <i class="fa-solid fa-check-circle"></i> Activa
-                                                              </span>
-                                                          }
-                                                          else
-                                                          {
-                                                              <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" @onclick="() => AbrirModalAgendar(cita.Derivacion, true, cita.Doctor?.Id ?? 0)">
-                                                                  <i class="fa-solid fa-calendar-plus"></i> Agendar Subsecuente
-                                                              </button>
-                                                          }
-                                                      }
+                                                    @if (cita.Derivacion != null)
+                                                    {
+                                                        if (cita.Derivacion.Citas != null && cita.Derivacion.Citas.Any(c => c != null && c.Estado == "Pendiente" && c.Activo))
+                                                        {
+                                                            <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-lg border border-green-200">
+                                                                <i class="fa-solid fa-check-circle"></i> Activa
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm" @onclick="() => AbrirModalAgendar(cita.Derivacion, true, cita.Doctor?.Id ?? 0)">
+                                                                <i class="fa-solid fa-calendar-plus"></i> Agendar Subsecuente
+                                                            </button>
+                                                        }
+                                                    }
                                                 </td>
                                             </tr>
                                         }
                                     </tbody>
                                 </table>
+                            </div>
+
+                        <!-- Paginación de 10 y Botón Exportar a Excel (Abajo de la tabla) -->
+                    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <button class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors hover:bg-gray-100"
+                                disabled="@(paginaActualSubPendientes <= 1)"
+                                @onclick="PaginaAnteriorSubPendientes">
+                            Anterior
+                        </button>
+
+                        <span class="text-sm font-semibold text-gray-700">
+                            Página @paginaActualSubPendientes de @(totalPaginasSubPendientes == 0 ? 1 : totalPaginasSubPendientes)
+                        </span>
+                        <button class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors hover:bg-gray-100"
+                                disabled="@(paginaActualSubPendientes >= totalPaginasSubPendientes)"
+                                @onclick="PaginaSiguienteSubPendientes">
+                                Siguiente
+                        </button>
+                                </div>
+                                <button type="button"
+        @onclick="ExportarSubPendientesExcel"
+        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap">
+    <i class="fa-solid fa-file-excel"></i>
+    Exportar a Excel
+</button>
                             </div>
                         }
                     </div>
@@ -946,18 +1007,92 @@
                             }
                         </div>
 
-                        <div class="mb-4 flex flex-col md:flex-row gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <div class="flex-1 flex items-center bg-white p-2 rounded-lg border border-gray-200">
-                                <i class="fa-solid fa-search text-gray-400 mx-3"></i>
-                                <input type="text" value="@filtroSubAgendados" @oninput="OnSearchSubAgendadosInput" placeholder="Buscar por nombres, apellidos o cédula..." class="w-full bg-transparent outline-none text-gray-700" />
-                            </div>
-                            <select value="@estadoSubAgendados" @onchange="OnEstadoSubAgendados" class="px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-700 outline-none">
-                                <option value="">Todos los estados</option>
-                                <option value="Pendiente">Pendiente</option>
-                                <option value="Atendido">Atendido</option>
-                                <option value="No Asistio">No asistió</option>
-                            </select>
-                        </div>
+                        <!-- Filtros -->
+<div class="mb-6">
+    <!-- Barra Superior: Buscador y Botón de Filtros -->
+    <div class="flex items-center gap-3 mb-4">
+        <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <i class="fa-solid fa-search"></i>
+            </span>
+            <input type="text" 
+                   class="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500" 
+                   placeholder="Buscar por nombres, apellidos o cédula..." 
+                   value="@filtroSubAgendados" 
+                   @oninput="OnSearchSubAgendadosChanged" />
+        </div>
+
+        <button type="button" 
+                class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors border border-gray-200"
+                @onclick="ToggleFiltrosSubAgendados">
+            <i class="fa-solid fa-filter text-xs"></i>
+            <span>Filtros</span>
+        </button>
+    </div>
+
+    <!-- Panel Desplegable de Filtros -->
+    @if (mostrarFiltrosSubAgendados)
+    {
+        <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl mb-4 transition-all duration-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                
+                <!-- 1. Filtro por Fecha -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha:</label>
+                    <div class="flex items-center gap-2">
+                        <input type="date" 
+                               class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500" 
+                               value="@(filtroFechaSubAgendados?.ToString("yyyy-MM-dd"))" 
+                               @onchange="OnFechaSubAgendadosChanged" />
+                        @if (filtroFechaSubAgendados.HasValue)
+                        {
+                            <button type="button" 
+                                    class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-600 transition-colors"
+                                    @onclick="LimpiarFechaSubAgendados">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- 2. Filtro por Estado -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Estado:</label>
+                    <select class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500" 
+                            value="@filtroEstadoSubAgendados" 
+                            @onchange="OnEstadoSubAgendadosChanged">
+                        <option value="">Todos los estados</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Atendido">Atendido</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <!-- 3. Filtro por Doctor y Botón Limpiar Todo -->
+                <div class="flex items-center gap-2">
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Doctor que atendió:</label>
+<select class="form-select"
+        value="@filtroDoctorSubAgendados"
+        @onchange="OnDoctorSubAgendadosChanged">
+    <option value="">Todos los doctores</option>
+    @foreach (var doc in listaDoctores)
+    {
+        <option value="@doc.Id">@doc.Nombre</option>
+    }
+</select>
+                    </div>
+                    <button type="button" 
+                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg text-sm transition-colors h-[38px] mt-auto"
+                            @onclick="LimpiarTodosLosFiltrosSubAgendados">
+                        Limpiar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+</div>
 
                         @if (subAgendadosCargando)
                         {
@@ -987,13 +1122,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var cita in subAgendadosServer)
+                                        @foreach (var cita in subAgendadosPaginados)
                                         {
                                             <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                                                 <td class="px-3 py-3 text-sm font-medium text-gray-800">@cita.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
                                                 <td class="px-3 py-3 text-sm text-gray-600">
                                                     <span class="font-semibold text-gray-800">@(cita.Derivacion?.Paciente?.NombreCompleto ?? "N/A")</span><br/>
-                                                    <span class="text-xs text-gray-400">@(cita.Derivacion?.Paciente?.Cedula ?? "") @(string.IsNullOrWhiteSpace(cita.Derivacion?.Paciente?.Telefono) ? "" : "· " + cita.Derivacion?.Paciente?.Telefono)</span>
+                                                    <span class="text-xs text-gray-400">@(cita.Derivacion?.Paciente?.Cedula ?? "") @(string.IsNullOrWhiteSpace(cita.Derivacion?.Paciente?.Telefono) ? "" : "Â· " + cita.Derivacion?.Paciente?.Telefono)</span>
                                                 </td>
                                                 <td class="px-3 py-3 text-sm text-gray-600">@(cita.Derivacion?.EspecialidadRequerida ?? cita.Doctor?.Especialidad ?? "N/A")</td>
                                                 <td class="px-3 py-3 text-sm text-gray-600">@LaboratorioFront.Services.Etiquetas.Doctor(cita.Doctor?.Nombre ?? "N/A")</td>
@@ -1016,6 +1151,16 @@
                                     Siguiente <i class="fa-solid fa-chevron-right ml-1"></i>
                                 </button>
                             </div>
+
+                            <!-- Botón Exportar al último -->
+                            <div class="mt-6 flex justify-end">
+                                <button type="button"
+        @onclick="ExportarSubAgendadosExcel"
+        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap">
+    <i class="fa-solid fa-file-excel"></i>
+    Exportar a Excel
+</button>
+                            </div>
                         }
                     </div>
                 }
@@ -1026,12 +1171,12 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-3xl mx-auto">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Registrar Nueva Derivacion</h2>
                 
-                                <h4 class="font-bold text-turquesa-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-user"></i> datos del Paciente</h4>
+                <h4 class="font-bold text-turquesa-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-user"></i> datos del Paciente</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">CEDULA/RUC:</label>
                         <input type="text" @bind="nuevoPaciente.Cedula" @bind:event="oninput" @onchange="BuscarPaciente" maxlength="13" onkeyup="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 focus:border-turquesa-500 outline-none transition-all" />
-                        <span class="text-xs text-gray-500">Solo numeros, maximo 13 di?gitos.</span>
+                        <span class="text-xs text-gray-500">Solo numeros, maximo 13 dígitos.</span>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo:</label>
@@ -1041,7 +1186,7 @@
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">telefono:</label>
                         <input type="text" @bind="nuevoPaciente.Telefono" maxlength="10" onkeyup="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 focus:border-turquesa-500 outline-none transition-all" />
-                        <span class="text-xs text-gray-500">Exactamente 10 ?digitos.</span>
+                        <span class="text-xs text-gray-500">Exactamente 10 dígitos.</span>
                     </div>
                 </div>
 
@@ -1050,9 +1195,12 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">especialidad Requerida:</label>
                         <select @bind="nuevaDerivacion.EspecialidadRequerida" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 focus:border-turquesa-500 outline-none transition-all bg-white">
-                            @if (currentRole.ToLower() == "ekgmed" || currentRole == "EKGMD") {
+                            @if (currentRole.ToLower() == "ekgmed" || currentRole == "EKGMD") 
+                            {
                                 <option value="ELECTROCARDIOGRAMA">ELECTROCARDIOGRAMA</option>
-                            } else {
+                            } 
+                            else 
+                            {
                                 <option value="">Seleccione...</option>
                                 @foreach(var esp in especialidades)
                                 {
@@ -1061,30 +1209,31 @@
                             }
                         </select>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Emision:</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Emisión:</label>
                         <input type="date" @bind="nuevaDerivacion.FechaEmision" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 focus:border-turquesa-500 outline-none transition-all" />
                     </div>
-                                        <div class="md:col-span-2">
+                    
+                    <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Codigo de Validacion:</label>
                         <input type="text" @bind="nuevaDerivacion.CodigoValidacion" placeholder="Ingrese el codigo unico de derivacion..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 focus:border-turquesa-500 outline-none transition-all" />
                     </div>
+
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones:</label>
                         <textarea @bind="nuevaDerivacion.Observaciones" maxlength="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 focus:border-turquesa-500 outline-none transition-all h-24"></textarea>
-                        <span class="text-xs text-gray-500">maximo 100 caracteres.</span>
+                        <span class="text-xs text-gray-500">máximo 100 caracteres.</span>
                     </div>
                 </div>
 
                 <button @onclick="guardarDerivacion" class="w-full flex items-center justify-center gap-2 bg-turquesa-500 hover:bg-turquesa-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all">
-                    <i class="fa-solid fa-save"></i> guardar Derivacion
+                    <i class="fa-solid fa-save"></i> Guardar Derivación
                 </button>
             </div>
         }
-    </main>
-</div>
-
-
+     </main>  
+  </div>   
 
 @if (mostrarEditarDerivacion && derivacionEditando != null)
 {
@@ -1266,13 +1415,58 @@
 }
 
 @code {
+    // Variable para controlar la visibilidad del panel desplegable de filtros
+    private bool mostrarFiltrosSubAgendados = false;
+
+    // Variables de filtro para Estado y Doctor
+    private string filtroEstadoSubAgendados = string.Empty;
+    private string filtroDoctorSubAgendados = string.Empty;
+    // Variable para controlar la visibilidad del panel de filtros
+    private bool mostrarFiltros = false;
+    private int? filtroDoctorSubPendientes;
+    private List<Doctor> listaDoctores = new();
     private List<DerivacionesService.CitaDerivacionResponse> citasSinSubsecuente;
     private List<DerivacionesService.CitaDerivacionResponse> citasSinSubsecuenteFiltradas;
+    // Métodos para abrir / cerrar los paneles de filtros
+    private void ToggleFiltrosSubAgendados()
+    {
+        mostrarFiltrosSubAgendados = !mostrarFiltrosSubAgendados;
+    }
+
+    private void ToggleMostrarFiltros()
+    {
+        mostrarFiltros = !mostrarFiltros;
+    }
+
+    // Métodos llamados por los eventos oninput / onchange en el HTML
+    private async Task OnSearchSubAgendadosChanged(ChangeEventArgs e)
+    {
+        filtroSubAgendados = e.Value?.ToString() ?? string.Empty;
+        paginaSubAgendados = 1;
+        await CargarSubAgendados();
+    }
+
+    private async Task OnEstadoSubAgendadosChanged(ChangeEventArgs e)
+    {
+        filtroEstadoSubAgendados = e.Value?.ToString() ?? string.Empty;
+        paginaSubAgendados = 1;
+        await CargarSubAgendados();
+    }
+
+    
+private async Task OnDoctorSubAgendadosChanged(ChangeEventArgs e)
+{
+    filtroDoctorSubAgendados = e.Value?.ToString() ?? string.Empty;
+    paginaSubAgendados = 1;
+    await CargarSubAgendados();
+}
+
     private string filtroSinSubsecuente = "";
     private System.Timers.Timer debounceTimerSinSubsecuente;
     private bool esSubsecuenteAgendar = false;
     
     private void OnSearchSinSubsecuenteInput(ChangeEventArgs e)
+
     {
         filtroSinSubsecuente = e.Value?.ToString() ?? "";
         if (debounceTimerSinSubsecuente != null) { debounceTimerSinSubsecuente.Stop(); debounceTimerSinSubsecuente.Dispose(); }
@@ -1281,21 +1475,129 @@
         debounceTimerSinSubsecuente.Start();
     }
     
-    private void FiltrarSinSubsecuente(object state)
+    private DateTime? filtroFechaSubPendientes = null;
+    private DateTime? filtroFechaSubAgendados = null;
+private int paginaActualSubPendientes = 1;
+private int pageSizeSubPendientes = 10; // Paginación de 10 registros
+private int paginaActualSubAgendados = 1;
+private int pageSizeSubAgendados = 10;
+// Calcula el total de páginas según la lista filtrada que tengas
+private int totalPaginasSubPendientes => 
+    (int)Math.Ceiling((double)(citasSinSubsecuenteFiltradas?.Count ?? 0) / pageSizeSubPendientes);
+
+
+// Muestra solo 10 elementos por página según la página actual
+private IEnumerable<DerivacionesService.CitaDerivacionResponse> subPendientesPaginados =>
+    citasSinSubsecuenteFiltradas?
+        .Skip((paginaActualSubPendientes - 1) * pageSizeSubPendientes)
+        .Take(pageSizeSubPendientes) ?? Enumerable.Empty<DerivacionesService.CitaDerivacionResponse>();
+private IEnumerable<DerivacionesService.CitaDerivacionResponse> subAgendadosPaginados =>
+    subAgendadosServer?
+        .Skip((paginaActualSubAgendados - 1) * pageSizeSubAgendados)
+        .Take(pageSizeSubAgendados) ?? Enumerable.Empty<DerivacionesService.CitaDerivacionResponse>();
+private void PaginaSiguienteSubPendientes()
+{
+    if (paginaActualSubPendientes < totalPaginasSubPendientes)
+    {
+        paginaActualSubPendientes++;
+    }
+}
+private void PaginaAnteriorSubPendientes()
+{
+    if (paginaActualSubPendientes > 1) paginaActualSubPendientes--;
+}
+private void OnFiltroFechaSubPendientesChanged(ChangeEventArgs e)
+{
+    if (DateTime.TryParse(e.Value?.ToString(), out var dt))
+    {
+        filtroFechaSubPendientes = dt;
+    }
+    else
+    {
+        filtroFechaSubPendientes = null;
+    }
+    FiltrarSinSubsecuente(state: null);
+}
+
+private void LimpiarFechaSubPendientes()
+{
+    filtroFechaSubPendientes = null;
+    filtroDoctorSubPendientes = null;
+    FiltrarSinSubsecuente(state: null);
+}
+    private async Task OnFechaSubAgendadosChanged(ChangeEventArgs e)
+{
+    if (DateTime.TryParse(e.Value?.ToString(), out var dt))
+    {
+        filtroFechaSubAgendados = dt;
+    }
+    else
+    {
+        filtroFechaSubAgendados = null;
+    }
+    paginaSubAgendados = 1;
+    await CargarSubAgendados();
+}
+
+    private async Task LimpiarFechaSubAgendados()
+{
+    filtroFechaSubAgendados = null;
+    paginaSubAgendados = 1;
+    await CargarSubAgendados();
+}
+
+    private async Task LimpiarTodosLosFiltrosSubAgendados()
+{
+    filtroSubAgendados = string.Empty;
+    filtroFechaSubAgendados = null;
+    filtroEstadoSubAgendados = string.Empty;
+    filtroDoctorSubAgendados = string.Empty; 
+    paginaSubAgendados = 1;
+    await CargarSubAgendados();              
+}
+
+private void OnDoctorSubPendientesChanged(ChangeEventArgs e)
+{
+    filtroDoctorSubPendientes = null;
+
+    if (int.TryParse(e.Value?.ToString(), out var doctorId) && doctorId > 0)
+    {
+        filtroDoctorSubPendientes = doctorId;
+    }
+
+    paginaActualSubPendientes = 1;
+    FiltrarSinSubsecuente(null);
+}
+
+    private void FiltrarSinSubsecuente(object? state)
     {
         InvokeAsync(() => {
-            if (string.IsNullOrWhiteSpace(filtroSinSubsecuente))
+            if (citasSinSubsecuente == null)
             {
-                citasSinSubsecuenteFiltradas = citasSinSubsecuente?.ToList();
+                citasSinSubsecuenteFiltradas = new();
+                StateHasChanged();
+                return;
             }
-            else
+            var query = citasSinSubsecuente.AsEnumerable();
+
+            if (filtroFechaSubPendientes.HasValue)
             {
-                var q = filtroSinSubsecuente.ToLower();
-                citasSinSubsecuenteFiltradas = citasSinSubsecuente?.Where(c => 
+                query = query.Where(c => c.FechaHora.Date == filtroFechaSubPendientes.Value.Date);
+            }
+           if (filtroDoctorSubPendientes.HasValue)
+            {
+               query = query.Where(c => c.Doctor?.Id == filtroDoctorSubPendientes.Value); 
+            }
+            if (!string.IsNullOrWhiteSpace(filtroSinSubsecuente))
+            {
+                var q = filtroSinSubsecuente.Trim().ToLower();
+                query = query.Where(c => 
                     (c.Derivacion?.Paciente?.NombreCompleto?.ToLower()?.Contains(q) == true) ||
                     (c.Derivacion?.Paciente?.Cedula?.Contains(q) == true)
-                ).ToList();
+                );
             }
+
+            citasSinSubsecuenteFiltradas = query.ToList();
             StateHasChanged();
         });
     }
@@ -1904,22 +2206,40 @@
     private System.Threading.CancellationTokenSource? subAgendadosCts;
 
     private async Task CargarSubAgendados()
+{
+    subAgendadosCargando = true;
+    StateHasChanged();
+    try
     {
-        subAgendadosCargando = true;
-        StateHasChanged();
-        try
+        // Pasa las variables de tus filtros (filtroDoctorSubAgendados, filtroEstadoSubAgendados, etc.)
+        // 1. Convertimos el valor seleccionado a entero (ID del doctor)
+        int? doctorIdFiltro = null;
+        if (!string.IsNullOrWhiteSpace(filtroDoctorSubAgendados) && int.TryParse(filtroDoctorSubAgendados, out var idParsed))
         {
-            var result = await Service.GetCitasPaginadasAsync(paginaSubAgendados, ItemsSubAgendados, filtroSubAgendados, estadoSubAgendados, null, null, true);
-            subAgendadosServer = result.Data ?? new();
-            totalSubAgendados = result.TotalRegistros;
-            totalPaginasSubAgendados = result.TotalRegistros == 0 ? 1 : (int)Math.Ceiling((double)result.TotalRegistros / ItemsSubAgendados);
+            doctorIdFiltro = idParsed;
         }
-        finally
-        {
-            subAgendadosCargando = false;
-            StateHasChanged();
-        }
+
+        // 2. Consultamos la API enviando el ID numérico
+        var result = await Service.GetCitasPaginadasAsync(
+            paginaSubAgendados,
+            10,
+            filtroSubAgendados,
+            filtroEstadoSubAgendados,
+            filtroFechaSubAgendados,
+            doctorIdFiltro
+        );
+
+        subAgendadosServer = result.Data ?? new List<DerivacionesService.CitaDerivacionResponse>();
+
+        totalSubAgendados = result.TotalRegistros;
+        totalPaginasSubAgendados = totalSubAgendados == 0 ? 1 : (int)Math.Ceiling((double)totalSubAgendados / 10);
     }
+    finally
+    {
+        subAgendadosCargando = false;
+        StateHasChanged();
+    }
+}
 
     private async Task OnSearchSubAgendadosInput(ChangeEventArgs e)
     {
@@ -2220,6 +2540,10 @@ Tu salud es nuestra prioridad.";
         derivaciones = tDerivaciones.Result;
         especialidades = tEspecialidades.Result;
         doctores = tDoctores.Result;
+        // FILTRAR SOLO DOCTORES DE LA SUCURSAL CENTRO:
+        listaDoctores = doctores?
+            .Where(d => d.Sucursal != null && d.Sucursal.Equals("Centro", StringComparison.OrdinalIgnoreCase))
+            .ToList() ?? new List<Doctor>();
         StateHasChanged();
     }
 
@@ -2787,58 +3111,289 @@ Tu salud es nuestra prioridad.";
     }
 
 
+
+    private async Task ExportarNoAtendidosExcel()
+    {
+        if (noAtendidosServer == null || !noAtendidosServer.Any())
+        {
+            await JS.InvokeVoidAsync("alert", "No hay datos disponibles para exportar.");
+            return;
+        }
+
+        var noAtendidosCentro = noAtendidosServer
+            .Where(c => c.Doctor != null && 
+                       !string.IsNullOrEmpty(c.Doctor.Sucursal) && 
+                       c.Doctor.Sucursal.Equals("Centro", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (!noAtendidosCentro.Any())
+        {
+            await JS.InvokeVoidAsync("alert", "No hay pacientes de la sucursal Centro en esta lista.");
+            return;
+        }
+
+        var datosExportar = noAtendidosCentro.Select(c => new 
+        {
+            Fecha = c.FechaHora.ToString("dd/MM/yyyy"),
+            Hora = c.FechaHora.ToString("HH:mm"),
+            Paciente = c.Derivacion?.Paciente?.NombreCompleto ?? "N/A",
+            Cedula = c.Derivacion?.Paciente?.Cedula ?? "N/A",
+            Telefono = c.Derivacion?.Paciente?.Telefono ?? "N/A",
+            Especialidad = c.Derivacion?.EspecialidadRequerida ?? c.Doctor?.Especialidad ?? "N/A",
+            Doctor = c.Doctor?.Nombre ?? "N/A",
+            Sucursal = c.Doctor?.Sucursal ?? "Centro"
+        }).ToList();
+
+        var jsonString = System.Text.Json.JsonSerializer.Serialize(datosExportar);
+
+        var script = @"
+            (function(data) {
+                let tableHtml = 
+                    <html xmlns:o=""urn:schemas-microsoft-com:office:office"" xmlns:x=""urn:schemas-microsoft-com:office:excel"" xmlns=""http://www.w3.org/TR/REC-html40"">
+                    <head>
+                        <meta charset=""utf-8"">
+                        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>No Atendidos Centro</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+                        <style>
+                            th {
+                                background-color: #E2EFDA !important;
+                                color: #1E4620 !important;
+                                font-weight: bold;
+                                border: 1px solid #B0C4DE;
+                                padding: 8px;
+                                text-align: center;
+                            }
+                            td {
+                                border: 1px solid #D9D9D9;
+                                padding: 6px;
+                                mso-number-format: ""\@"" /* Preserva ceros a la izquierda */;
+                            }
+                            .text-center { text-align: center; }
+                        </style>
+                    </head>
+                    <body>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Paciente</th>
+                                    <th>Cedula</th>
+                                    <th>Telefono</th>
+                                    <th>Especialidad</th>
+                                    <th>Doctor</th>
+                                    <th>Sucursal</th>
+                                </tr>
+                            </thead>
+                            <tbody>;
+
+                data.forEach(item => {
+                    tableHtml += 
+                        <tr>
+                            <td class=""text-center""></td>
+                            <td class=""text-center""></td>
+                            <td></td>
+                            <td class=""text-center""></td>
+                            <td class=""text-center""></td>
+                            <td></td>
+                            <td></td>
+                            <td class=""text-center""></td>
+                        </tr>;
+                });
+
+                tableHtml += </tbody></table></body></html>;
+
+                const blob = new Blob(['\ufeff' + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Citas_No_Atendidas_Centro.xls';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })(" + jsonString + @");
+        ";
+
+        await JS.InvokeVoidAsync("eval", script);
+    }
+    private async Task ExportarSubPendientesExcel()
+{
+    if (citasSinSubsecuenteFiltradas == null || !citasSinSubsecuenteFiltradas.Any())
+    {
+        await JS.InvokeVoidAsync("alert", "No hay datos disponibles para exportar.");
+        return;
+    }
+
+    var pendientesCentro = citasSinSubsecuenteFiltradas
+        .Where(c => c.Doctor != null && 
+                    !string.IsNullOrEmpty(c.Doctor.Sucursal) && 
+                    c.Doctor.Sucursal.Equals("Centro", StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    if (!pendientesCentro.Any())
+    {
+        await JS.InvokeVoidAsync("alert", "No hay pacientes de la sucursal Centro para el filtro seleccionado.");
+        return;
+    }
+
+    var datosExportar = pendientesCentro.Select(c => new 
+    {
+        Fecha = c.FechaHora.ToString("dd/MM/yyyy"),
+        Hora = c.FechaHora.ToString("HH:mm"),
+        Paciente = c.Derivacion?.Paciente?.NombreCompleto ?? "N/A",
+        Cedula = c.Derivacion?.Paciente?.Cedula ?? "N/A",
+        Telefono = c.Derivacion?.Paciente?.Telefono ?? "N/A",
+        Especialidad = c.Derivacion?.EspecialidadRequerida ?? c.Doctor?.Especialidad ?? "N/A",
+        Doctor = c.Doctor?.Nombre ?? "N/A",
+        Sucursal = c.Doctor?.Sucursal ?? "Centro"
+    }).ToList();
+
+    var jsonString = System.Text.Json.JsonSerializer.Serialize(datosExportar);
+    var script = @"
+    (function(data) {
+        let tableHtml = `
+        <html xmlns:o=""urn:schemas-microsoft-com:office:office"" xmlns:x=""urn:schemas-microsoft-com:office:excel"" xmlns=""http://www.w3.org/TR/REC-html40"">
+        <head>
+            <meta charset=""utf-8"">
+            <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Subsecuentes Pendientes</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+            <style>
+                th { background-color: #E2EFDA !important; color: #1E4620 !important; font-weight: bold; border: 1px solid #B0C4DE; padding: 8px; text-align: center; }
+                td { border: 1px solid #D9D9D9; padding: 6px; mso-number-format: ""\@"" /* Preserva ceros a la izquierda */; }
+                .text-center { text-align: center; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>Cedula</th>
+                        <th>Telefono</th>
+                        <th>Especialidad</th>
+                        <th>Doctor</th>
+                        <th>Sucursal</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        data.forEach(item => {
+            tableHtml += `
+            <tr>
+                <td class=""text-center"">${item.Fecha}</td>
+                <td class=""text-center"">${item.Hora}</td>
+                <td>${item.Paciente}</td>
+                <td class=""text-center"">${item.Cedula}</td>
+                <td class=""text-center"">${item.Telefono}</td>
+                <td>${item.Especialidad}</td>
+                <td>${item.Doctor}</td>
+                <td class=""text-center"">${item.Sucursal}</td>
+            </tr>`;
+        });
+        tableHtml += `</tbody></table></body></html>`;
+        const blob = new Blob(['\ufeff' + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Subsecuentes_Pendientes_Centro.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    })(" + jsonString + @");";
+
+    await JS.InvokeVoidAsync("eval", script);
 }
+    private async Task ExportarSubAgendadosExcel()
+{
+    if (subAgendadosServer == null || !subAgendadosServer.Any())
+    {
+        await JS.InvokeVoidAsync("alert", "No hay datos disponibles para exportar.");
+        return;
+    }
 
+    var agendadosCentro = subAgendadosServer
+        .Where(c => c.Doctor != null && 
+                    !string.IsNullOrEmpty(c.Doctor.Sucursal) && 
+                    c.Doctor.Sucursal.Equals("Centro", StringComparison.OrdinalIgnoreCase))
+        .ToList();
 
+    if (!agendadosCentro.Any())
+    {
+        await JS.InvokeVoidAsync("alert", "No hay pacientes de la sucursal Centro para el filtro seleccionado.");
+        return;
+    }
 
+    var datosExportar = agendadosCentro.Select(c => new 
+    {
+        Fecha = c.FechaHora.ToString("dd/MM/yyyy"),
+        Hora = c.FechaHora.ToString("HH:mm"),
+        Paciente = c.Derivacion?.Paciente?.NombreCompleto ?? "N/A",
+        Cedula = c.Derivacion?.Paciente?.Cedula ?? "N/A",
+        Telefono = c.Derivacion?.Paciente?.Telefono ?? "N/A",
+        Especialidad = c.Derivacion?.EspecialidadRequerida ?? c.Doctor?.Especialidad ?? "N/A",
+        Doctor = c.Doctor?.Nombre ?? "N/A",
+        Estado = c.Estado ?? "N/A",
+        Sucursal = c.Doctor?.Sucursal ?? "Centro"
+    }).ToList();
 
+    var jsonString = System.Text.Json.JsonSerializer.Serialize(datosExportar);
+    var script = @"
+    (function(data) {
+        let tableHtml = `
+        <html xmlns:o=""urn:schemas-microsoft-com:office:office"" xmlns:x=""urn:schemas-microsoft-com:office:excel"" xmlns=""http://www.w3.org/TR/REC-html40"">
+        <head>
+            <meta charset=""utf-8"">
+            <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Subsecuentes Agendados</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+            <style>
+                th { background-color: #E2EFDA !important; color: #1E4620 !important; font-weight: bold; border: 1px solid #B0C4DE; padding: 8px; text-align: center; }
+                td { border: 1px solid #D9D9D9; padding: 6px; mso-number-format: ""\@"" /* Preserva ceros a la izquierda */; }
+                .text-center { text-align: center; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>Cedula</th>
+                        <th>Telefono</th>
+                        <th>Especialidad</th>
+                        <th>Doctor</th>
+                        <th>Estado</th>
+                        <th>Sucursal</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        data.forEach(item => {
+            tableHtml += `
+            <tr>
+                <td class=""text-center"">${item.Fecha}</td>
+                <td class=""text-center"">${item.Hora}</td>
+                <td>${item.Paciente}</td>
+                <td class=""text-center"">${item.Cedula}</td>
+                <td class=""text-center"">${item.Telefono}</td>
+                <td>${item.Especialidad}</td>
+                <td>${item.Doctor}</td>
+                <td class=""text-center"">${item.Estado}</td>
+                <td class=""text-center"">${item.Sucursal}</td>
+            </tr>`;
+        });
+        tableHtml += `</tbody></table></body></html>`;
+        const blob = new Blob(['\ufeff' + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Subsecuentes_Agendados_Centro.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    })(" + jsonString + @");";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    await JS.InvokeVoidAsync("eval", script);
+}
+}
 
