@@ -1,0 +1,315 @@
+@using System.Net.Http.Json
+@using System.Text.Json
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject LaboratorioFront.Services.ApiService Api
+
+@* Auditoria: quien hizo cada cambio en citas, derivaciones, pacientes, registros del bot, doctores y usuarios. *@
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 normal-case">
+    <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+        <h4 class="text-lg font-bold text-gray-800 flex items-center"><i class="fa-solid fa-user-shield text-turquesa-500 mr-2"></i> Auditoría</h4>
+        <button @onclick="Exportar" disabled="@exportando" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm disabled:opacity-50 flex items-center gap-2">
+            <i class="fa-solid fa-file-excel"></i> Exportar a Excel
+        </button>
+    </div>
+
+    <div class="mb-4">
+        <button @onclick="() => verAyuda = !verAyuda" class="text-sm font-semibold text-turquesa-700 hover:underline flex items-center gap-2">
+            <i class="fa-solid @(verAyuda ? "fa-chevron-down" : "fa-chevron-right") text-xs"></i> ¿Cómo se usa esta pantalla?
+        </button>
+        @if (verAyuda)
+        {
+            <div class="mt-2 p-4 rounded-lg bg-blue-50 border border-blue-100 text-sm text-gray-700 space-y-2">
+                <p><b>Qué muestra:</b> cada vez que alguien crea, cambia o borra una cita, una derivación, un paciente, un doctor o un horario, queda una fila con la fecha, el usuario que lo hizo, qué hizo y sobre qué paciente.</p>
+                <p><b>Para saber qué hizo una persona:</b> elige su nombre en <b>Usuario</b> (o haz clic en su botón con el contador, arriba de la tabla). Usa <b>Desde / Hasta</b> para el día que te interesa.</p>
+                <p><b>Para saber qué le pasó a un paciente:</b> escribe su nombre o cédula en <b>Buscar</b>. Verás todos los cambios sobre ese paciente y quién los hizo.</p>
+                <p><b>Para ver el detalle:</b> haz clic en una fila. Se abre lo que cambió, por ejemplo <i>Estado: Pendiente → No Asistio</i>.</p>
+                <p><b>Qué significan los filtros:</b> <b>Registro</b> es el tipo de dato (cita, paciente...). <b>Operación</b> es si se creó, se modificó o se eliminó. <b>Quién</b> separa las personas del trabajo automático del bot (Sistema) y de las respuestas de los pacientes por WhatsApp.</p>
+                <p><b>Para revisar solo lo que hace el personal:</b> en <b>Quién</b> elige <i>Personas</i>, así no aparece el trabajo automático del bot.</p>
+                <p class="text-xs text-gray-500">Se muestran los últimos 3 días por defecto. El botón <i>Exportar a Excel</i> descarga lo que estés viendo con los filtros aplicados.</p>
+            </div>
+        }
+    </div>
+
+    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 flex flex-wrap gap-3 items-end">
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
+            <input type="date" value="@desde.ToString("yyyy-MM-dd")" @onchange="e => CambiarFecha(e, true)" class="px-3 py-2 border border-gray-300 rounded-lg outline-none" />
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
+            <input type="date" value="@hasta.ToString("yyyy-MM-dd")" @onchange="e => CambiarFecha(e, false)" class="px-3 py-2 border border-gray-300 rounded-lg outline-none" />
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Usuario</label>
+            <select value="@usuario" @onchange="e => CambiarFiltro(v => usuario = v, e)" class="px-3 py-2 border border-gray-300 rounded-lg outline-none max-w-xs">
+                <option value="" selected="@(usuario == "")">Todos</option>
+                @foreach (var u in usuarios)
+                {
+                    <option value="@u.Usuario" selected="@(usuario == u.Usuario)">@u.Usuario @(string.IsNullOrWhiteSpace(u.Rol) ? "" : "(" + u.Rol + ")")</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Registro</label>
+            <select value="@entidad" @onchange="e => CambiarFiltro(v => entidad = v, e)" class="px-3 py-2 border border-gray-300 rounded-lg outline-none">
+                <option value="">Todos</option>
+                <option>Cita</option><option>Derivacion</option><option>Paciente</option><option value="Registro del bot">Registro del bot</option>
+                <option>Doctor</option><option value="Horario de doctor">Horario de doctor</option><option value="Dia libre de doctor">Día libre de doctor</option>
+                <option value="Requisito de cita">Requisito de cita</option><option>Usuario</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Operación</label>
+            <select value="@operacion" @onchange="e => CambiarFiltro(v => operacion = v, e)" class="px-3 py-2 border border-gray-300 rounded-lg outline-none">
+                <option value="">Todas</option><option value="Creado">Creado</option><option value="Modificado">Modificado</option><option value="Eliminado">Eliminado</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Quién</label>
+            <select value="@origen" @onchange="e => CambiarFiltro(v => origen = v, e)" class="px-3 py-2 border border-gray-300 rounded-lg outline-none">
+                <option value="">Todos</option><option value="Usuario">Personas</option><option value="Sistema">Sistema (bot / tareas)</option><option value="Paciente">Paciente (WhatsApp)</option>
+            </select>
+        </div>
+        <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Buscar (paciente, cédula, detalle)</label>
+            <input type="text" value="@texto" @oninput="OnBuscar" placeholder="Ej: nombre, cédula, 'No Asistio'..." class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none" />
+        </div>
+        <button @onclick="Limpiar" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium">Limpiar</button>
+    </div>
+
+    @if (resumenUsuarios.Count > 0)
+    {
+        <div class="flex flex-wrap gap-2 mb-4">
+            @foreach (var r in resumenUsuarios)
+            {
+                <button @onclick="() => FiltrarPorUsuario(r.Usuario)" class="px-3 py-1 rounded-full text-xs font-semibold border @(usuario == r.Usuario ? "bg-turquesa-500 text-white border-turquesa-500" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50")" title="Ver solo lo que hizo este usuario">
+                    @r.Usuario <span class="opacity-70">· @r.Cantidad</span>
+                </button>
+            }
+        </div>
+    }
+
+    @if (cargando)
+    {
+        <div class="flex justify-center py-10 text-turquesa-600"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>
+    }
+    else if (filas.Count == 0)
+    {
+        <p class="text-center text-gray-500 italic py-8">No hay cambios registrados con esos filtros. La auditoría guarda lo que se haga desde que se activó.</p>
+    }
+    else
+    {
+        <p class="text-xs text-gray-500 mb-2">@total cambio(s) encontrados. Haz clic en una fila para ver el detalle de lo que cambió.</p>
+        <div class="overflow-x-auto rounded-xl border border-gray-200">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-3 py-3">Fecha</th>
+                        <th class="px-3 py-3">Usuario</th>
+                        <th class="px-3 py-3">Qué hizo</th>
+                        <th class="px-3 py-3">Registro</th>
+                        <th class="px-3 py-3">Paciente</th>
+                        <th class="px-3 py-3">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach (var f in filas)
+                    {
+                        <tr class="hover:bg-gray-50 cursor-pointer" @onclick="() => Alternar(f.Id)">
+                            <td class="px-3 py-2 whitespace-nowrap text-gray-700">@f.Fecha</td>
+                            <td class="px-3 py-2 whitespace-nowrap">
+                                <span class="font-semibold text-gray-800">@f.Usuario</span>
+                                @if (!string.IsNullOrWhiteSpace(f.Rol)) { <span class="block text-xs text-gray-400">@f.Rol @(f.Sucursal != null ? "· " + f.Sucursal : "")</span> }
+                                else if (f.Origen != "Usuario") { <span class="block text-xs text-gray-400">@f.Origen</span> }
+                            </td>
+                            <td class="px-3 py-2 text-gray-700">@f.Accion</td>
+                            <td class="px-3 py-2 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded text-xs font-bold @ClaseOperacion(f.Operacion)">@f.Operacion</span>
+                                <span class="block text-xs text-gray-500">@f.Entidad @(f.IdEntidad.HasValue ? "#" + f.IdEntidad : "")</span>
+                            </td>
+                            <td class="px-3 py-2 text-gray-700">@f.Paciente <span class="block text-xs text-gray-400">@f.Cedula</span></td>
+                            <td class="px-3 py-2 text-gray-600 max-w-md truncate">@f.Resumen</td>
+                        </tr>
+                        @if (abiertas.Contains(f.Id))
+                        {
+                            <tr class="bg-gray-50">
+                                <td colspan="6" class="px-4 py-3 text-xs text-gray-700">
+                                    <p class="font-semibold mb-1">@f.Resumen</p>
+                                    @foreach (var c in Cambios(f))
+                                    {
+                                        <div><span class="font-bold">@c.Campo:</span> <span class="text-red-600">@(c.Antes ?? "(vacío)")</span> <i class="fa-solid fa-arrow-right mx-1 text-gray-400"></i> <span class="text-green-700">@(c.Despues ?? "(vacío)")</span></div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="flex justify-between items-center mt-4">
+            <button @onclick="Anterior" disabled="@(pagina <= 1)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold disabled:opacity-40">Anterior</button>
+            <span class="text-sm text-gray-600">Página @pagina de @totalPaginas</span>
+            <button @onclick="Siguiente" disabled="@(pagina >= totalPaginas)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold disabled:opacity-40">Siguiente</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Sucursal { get; set; } = "";
+
+    public class FilaAuditoria
+    {
+        public long Id { get; set; }
+        public string Fecha { get; set; } = "";
+        public string Usuario { get; set; } = "";
+        public string? Nombre { get; set; }
+        public string? Rol { get; set; }
+        public string? Sucursal { get; set; }
+        public string Origen { get; set; } = "";
+        public string Accion { get; set; } = "";
+        public string Entidad { get; set; } = "";
+        public int? IdEntidad { get; set; }
+        public string Operacion { get; set; } = "";
+        public string? Resumen { get; set; }
+        public string? Paciente { get; set; }
+        public string? Cedula { get; set; }
+        public string? Cambios { get; set; }
+    }
+    public class ResumenUsuario { public string Usuario { get; set; } = ""; public string? NombreUsuario { get; set; } public string? Origen { get; set; } public int Cantidad { get; set; } }
+    public class UsuarioItem { public string Usuario { get; set; } = ""; public string? NombreUsuario { get; set; } public string? Rol { get; set; } }
+    private class Respuesta { public int Total { get; set; } public List<FilaAuditoria> Data { get; set; } = new(); public List<ResumenUsuario> PorUsuario { get; set; } = new(); }
+
+    private const int PorPagina = 50;
+    private DateTime desde = DateTime.Today.AddDays(-2);
+    private DateTime hasta = DateTime.Today;
+    private string usuario = "", entidad = "", operacion = "", origen = "", texto = "";
+    private int pagina = 1, total = 0;
+    private bool cargando = true, exportando = false, verAyuda = false;
+    private List<FilaAuditoria> filas = new();
+    private List<ResumenUsuario> resumenUsuarios = new();
+    private List<UsuarioItem> usuarios = new();
+    private readonly HashSet<long> abiertas = new();
+    private System.Timers.Timer? debounce;
+    private int totalPaginas => Math.Max(1, (int)Math.Ceiling(total / (double)PorPagina));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarUsuarios();
+        await Cargar();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.Equals(sucursalCargada, Sucursal, StringComparison.Ordinal))
+        {
+            var primera = sucursalCargada == null;
+            sucursalCargada = Sucursal;
+            if (!primera) { usuario = ""; pagina = 1; await CargarUsuarios(); await Cargar(); }
+        }
+    }
+    private string? sucursalCargada;
+
+    private string Consulta(bool paginado) =>
+        $"desde={desde:yyyy-MM-dd}&hasta={hasta:yyyy-MM-dd}&usuario={Uri.EscapeDataString(usuario)}&entidad={Uri.EscapeDataString(entidad)}&operacion={Uri.EscapeDataString(operacion)}"
+        + $"&origen={Uri.EscapeDataString(origen)}&q={Uri.EscapeDataString(texto)}&sucursal={Uri.EscapeDataString(Sucursal)}" + (paginado ? $"&page={pagina}&pageSize={PorPagina}" : "");
+
+    private async Task CargarUsuarios()
+    {
+        try { usuarios = await Api.Http.GetFromJsonAsync<List<UsuarioItem>>($"api/Auditoria/usuarios?sucursal={Uri.EscapeDataString(Sucursal)}", Opciones) ?? new(); }
+        catch { usuarios = new(); }
+    }
+
+    private async Task Cargar()
+    {
+        cargando = true;
+        StateHasChanged();
+        try
+        {
+            var r = await Api.Http.GetFromJsonAsync<Respuesta>("api/Auditoria?" + Consulta(true), Opciones) ?? new Respuesta();
+            filas = r.Data; total = r.Total; resumenUsuarios = r.PorUsuario;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando auditoria: " + ex.Message);
+            filas = new(); total = 0; resumenUsuarios = new();
+        }
+        abiertas.Clear();
+        cargando = false;
+        StateHasChanged();
+    }
+
+    private static readonly JsonSerializerOptions Opciones = new() { PropertyNameCaseInsensitive = true };
+
+    private async Task CambiarFecha(ChangeEventArgs e, bool esDesde)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var f)) { if (esDesde) desde = f.Date; else hasta = f.Date; }
+        pagina = 1; await Cargar();
+    }
+
+    private async Task CambiarFiltro(Action<string> poner, ChangeEventArgs e) { poner(e.Value?.ToString() ?? ""); pagina = 1; await Cargar(); }
+    private async Task FiltrarPorUsuario(string u) { usuario = usuario == u ? "" : u; pagina = 1; await Cargar(); }
+
+    private void OnBuscar(ChangeEventArgs e)
+    {
+        texto = e.Value?.ToString() ?? "";
+        debounce?.Stop(); debounce?.Dispose();
+        debounce = new System.Timers.Timer(500) { AutoReset = false };
+        debounce.Elapsed += async (_, _) => { pagina = 1; await InvokeAsync(Cargar); };
+        debounce.Start();
+    }
+
+    private async Task Limpiar()
+    {
+        desde = DateTime.Today.AddDays(-2); hasta = DateTime.Today; usuario = entidad = operacion = origen = texto = ""; pagina = 1;
+        await Cargar();
+    }
+
+    private async Task Anterior() { if (pagina > 1) { pagina--; await Cargar(); } }
+    private async Task Siguiente() { if (pagina < totalPaginas) { pagina++; await Cargar(); } }
+
+    private void Alternar(long id) { if (!abiertas.Remove(id)) abiertas.Add(id); }
+
+    private static string ClaseOperacion(string op) => op switch
+    {
+        "Creado" => "bg-green-100 text-green-700",
+        "Eliminado" => "bg-red-100 text-red-700",
+        _ => "bg-blue-100 text-blue-700"
+    };
+
+    private record Cambio(string Campo, string? Antes, string? Despues);
+
+    private static List<Cambio> Cambios(FilaAuditoria f)
+    {
+        var lista = new List<Cambio>();
+        if (string.IsNullOrWhiteSpace(f.Cambios)) return lista;
+        try
+        {
+            using var doc = JsonDocument.Parse(f.Cambios);
+            foreach (var p in doc.RootElement.EnumerateObject())
+            {
+                string? V(int i) => p.Value.ValueKind == JsonValueKind.Array && p.Value.GetArrayLength() > i && p.Value[i].ValueKind == JsonValueKind.String ? p.Value[i].GetString() : null;
+                lista.Add(new Cambio(p.Name, V(0), V(1)));
+            }
+        }
+        catch { }
+        return lista;
+    }
+
+    private async Task Exportar()
+    {
+        exportando = true; StateHasChanged();
+        try
+        {
+            var response = await Api.Http.GetAsync("api/Auditoria/excel?" + Consulta(false));
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                await JS.InvokeVoidAsync("downloadFileFromBytes", $"auditoria_{desde:yyyyMMdd}_{hasta:yyyyMMdd}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Convert.ToBase64String(bytes));
+            }
+            else await JS.InvokeVoidAsync("alert", "No se pudo generar el Excel.");
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", "Error: " + ex.Message); }
+        finally { exportando = false; StateHasChanged(); }
+    }
+}

@@ -1,0 +1,127 @@
+@using LaboratorioFront.Services
+@inject DerivacionesService Service
+@inject Microsoft.JSInterop.IJSRuntime JS
+
+@* Activacion rapida: el paciente que no confirmo llego y se atiende ahora. Se crea una cita manual (turno extra) de hoy
+   y el paciente sale del proceso del bot. *@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div class="p-6 bg-turquesa-50 border-b border-turquesa-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-turquesa-900 m-0"><i class="fa-solid fa-bolt mr-2"></i> Atender hoy</h3>
+            <button type="button" @onclick="Cerrar" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-xl"></i></button>
+        </div>
+
+        <div class="p-6 flex flex-col gap-4">
+            <div>
+                <p class="text-lg font-bold text-gray-800 m-0">@Item.Paciente</p>
+                <p class="text-sm text-gray-500 m-0">@Item.Cedula &middot; @Item.Especialidad</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Doctor</label>
+                @if (cargando)
+                {
+                    <div class="text-turquesa-600"><i class="fa-solid fa-spinner fa-spin"></i> Cargando doctores...</div>
+                }
+                else if (doctores.Count == 0)
+                {
+                    <div class="p-3 bg-red-50 text-red-600 rounded-lg text-sm">No hay un doctor de esta especialidad en la sede. Usa "Otro día".</div>
+                }
+                else
+                {
+                    <select @bind="idDoctor" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none bg-white">
+                        <option value="0">Seleccione un doctor...</option>
+                        @foreach (var d in doctores)
+                        {
+                            <option value="@d.Id">@d.Nombre - @d.Consultorio</option>
+                        }
+                    </select>
+                }
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Hora (hoy @DateTime.Today.ToString("dd/MM/yyyy"))</label>
+                <input type="time" @bind="hora" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none" />
+            </div>
+
+            <p class="text-xs text-gray-500 m-0">Se registra como cita manual (turno extra). El paciente sale del proceso del bot y no recibe WhatsApp.</p>
+        </div>
+
+        <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+            <button type="button" @onclick="Cerrar" class="px-5 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-200">Cancelar</button>
+            <button type="button" @onclick="Confirmar" disabled="@(idDoctor <= 0 || guardando)" class="px-5 py-2.5 rounded-xl font-medium text-white shadow-md @(idDoctor > 0 && !guardando ? "bg-turquesa-600 hover:bg-turquesa-700" : "bg-gray-400 cursor-not-allowed")">
+                <i class="fa-solid fa-check mr-2"></i> Confirmar
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DerivacionesService.NoConfirmoItem Item { get; set; } = new();
+    [Parameter] public EventCallback OnCerrar { get; set; }
+    [Parameter] public EventCallback OnActivado { get; set; }
+
+    private List<Doctor> doctores = new();
+    private int idDoctor;
+    private TimeOnly hora = HoraActual();
+    private bool cargando = true;
+    private bool guardando;
+
+    // Hora actual redondeada a 5 minutos
+    private static TimeOnly HoraActual()
+    {
+        var ahora = DateTime.Now;
+        int min = (ahora.Minute / 5) * 5;
+        return new TimeOnly(ahora.Hour, min);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            string sede = (Item.Sede ?? string.Empty).IndexOf("MILAN", StringComparison.OrdinalIgnoreCase) >= 0 ? "Milan" : "Centro";
+            var todos = await Service.GetDoctoresAsync("");
+            doctores = todos.Where(d => d.Sucursal == sede && EspecialidadDoctor.Coincide(d, Item.Especialidad)).ToList();
+
+            // El doctor de su cita anterior, o el unico de la especialidad en la sede
+            if (Item.IdDoctorAnterior.HasValue && doctores.Any(d => d.Id == Item.IdDoctorAnterior.Value)) idDoctor = Item.IdDoctorAnterior.Value;
+            else if (doctores.Count == 1) idDoctor = doctores[0].Id;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task Cerrar() => await OnCerrar.InvokeAsync();
+
+    private async Task Confirmar()
+    {
+        if (idDoctor <= 0) return;
+        guardando = true;
+        try
+        {
+            var fechaHora = DateTime.Today.Add(hora.ToTimeSpan());
+            var conflicto = await Service.VerificarConflictoHorarioAsync(idDoctor, fechaHora, null, null, Item.Cedula);
+            if (conflicto.HayConflicto)
+            {
+                bool continuar = await JS.InvokeAsync<bool>("confirm", conflicto.Mensaje);
+                if (!continuar) return;
+            }
+            var res = await Service.ActivarNoConfirmoAsync(Item.IdBot, idDoctor, fechaHora, true);
+            if (res.Exito)
+            {
+                await JS.InvokeVoidAsync("alert", "Paciente activado: cita de hoy a las " + hora.ToString("HH:mm") + " (turno extra).");
+                await OnActivado.InvokeAsync();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Error: " + res.Mensaje);
+            }
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+}

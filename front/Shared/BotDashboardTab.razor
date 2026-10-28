@@ -1,0 +1,109 @@
+﻿@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+    <h4 class="text-lg font-bold text-gray-800 flex items-center mb-4">
+        <i class="fa-solid fa-robot text-turquesa-500 mr-2"></i> Panel de Control del Bot
+    </h4>
+
+    <div class="flex gap-2 mb-4">
+        <button @onclick="CargarStats" class="px-4 py-2 bg-turquesa-500 hover:bg-turquesa-600 text-white rounded-lg shadow transition-colors text-sm">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i> Actualizar
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(configError))
+    {
+        <p class="text-red-600 text-xs font-bold mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> @configError</p>
+    }
+
+    @if (isLoading)
+    {
+        <p class="text-gray-500 text-sm">Cargando estadisticas...</p>
+    }
+    else if (stats != null && stats.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @foreach (var sucursal in stats.Select(s => s.UnidadMedica).Distinct())
+            {
+                <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <h5 class="font-bold text-gray-700 mb-2 border-b pb-1">@sucursal</h5>
+                    @foreach (var esp in stats.Where(s => s.UnidadMedica == sucursal).GroupBy(s => s.Especialidad))
+                    {
+                        <div class="mb-2">
+                            <span class="text-xs font-bold text-turquesa-800 uppercase">@esp.Key</span>
+                            <ul class="mt-1 space-y-1">
+                                @foreach (var stat in esp.OrderBy(s => s.EstadoBot))
+                                {
+                                    <li class="flex justify-between text-xs">
+                                        <span class="text-gray-600">@FormatEstado(stat.EstadoBot)</span>
+                                        <span class="font-semibold @GetColorClass(stat.EstadoBot)">@stat.Cantidad</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        
+    }
+    else
+    {
+        <p class="text-gray-500 text-sm">No hay datos del bot.</p>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private List<BotStat> stats = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarStats();
+    }
+
+    private string configError = "";
+
+    private async Task CargarStats()
+    {
+        isLoading = true;
+        configError = "";
+        try
+        {
+            stats = await Http.GetFromJsonAsync<List<BotStat>>("api/BotDashboard/stats") ?? new();
+        }
+        catch (Exception ex)
+        {
+            configError = "No se pudieron cargar las estadísticas: " + ex.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private string FormatEstado(string estado)
+    {
+        return estado?.Replace("_", " ") ?? "N/A";
+    }
+
+    private string GetColorClass(string estado)
+    {
+        if (estado == null) return "text-gray-800";
+        if (estado.Contains("1_NUEVO")) return "text-red-500";
+        if (estado.Contains("MENSAJE_ENVIADO")) return "text-orange-500";
+        if (estado.Contains("CONFIRMADO") && !estado.Contains("NO")) return "text-green-600";
+        return "text-gray-800";
+    }
+
+    public class BotStat
+    {
+        public string EstadoBot { get; set; } = string.Empty;
+        public string UnidadMedica { get; set; } = string.Empty;
+        public string Especialidad { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
+    }
+}
+
+
+

@@ -1,0 +1,17 @@
+# Compilados y temporales del front
+front/bin/
+front/obj/
+.vs/
+
+# Lo que genera iniciar.ps1 al correr
+*.log
+*.err
+.pids
+api/datos/
+
+# Nunca subir configuracion real ni claves
+appsettings.Production.json
+bot_config.json
+*.pfx
+*.pem
+.env
