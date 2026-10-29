@@ -1,0 +1,41 @@
+@* Tarjetas de las dos sedes de Centro Medico Klinic. Se usan en el pie (fondo oscuro) y en la pagina Contacto (fondo claro, con mapa). *@
+<div class="@(ConMapa ? "grid gap-6 md:grid-cols-2 xl:grid-cols-2" : "kl-sedes")">
+    @foreach (var s in Todas)
+    {
+        <article class="@(Claro ? "kl-sede-light" : "kl-sede") kl-reveal">
+            <h3><span class="kl-pin" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>@s.Nombre</h3>
+            <p>@s.Direccion</p>
+            @if (ConMapa)
+            {
+                <p><span class="kl-pendiente">Horario de atención: por confirmar</span></p>
+            }
+            <div class="kl-sede-actions">
+                <a class="kl-btn kl-btn-w kl-btn-sm" href="@s.WhatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp<span class="kl-sr"> (se abre en una pestaña nueva)</span></a>
+                <a class="kl-btn kl-btn-o kl-btn-sm" href="@s.MapaUrl" target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right" aria-hidden="true"></i> Cómo llegar<span class="kl-sr"> a @s.Nombre (se abre en una pestaña nueva)</span></a>
+            </div>
+            @if (ConMapa)
+            {
+                <iframe class="kl-map" loading="lazy" title="Mapa de @s.Nombre" src="@s.MapaEmbed" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            }
+        </article>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Claro { get; set; }
+    [Parameter] public bool ConMapa { get; set; }
+
+    public record Sede(string Nombre, string Direccion, string WhatsAppTexto, string WhatsAppUrl, string MapaUrl, string MapaEmbed);
+
+    private static Sede Crear(string nombre, string direccion, string numeroLocal, string numeroInternacional, string mensaje, string lat, string lng) =>
+        new(nombre, direccion, numeroLocal,
+            $"https://wa.me/{numeroInternacional}?text={Uri.EscapeDataString(mensaje)}",
+            $"https://www.google.com/maps/search/?api=1&query={lat},{lng}",
+            $"https://www.google.com/maps?q={lat},{lng}&z=16&output=embed");
+
+    public static readonly IReadOnlyList<Sede> Todas = new[]
+    {
+        Crear("Sede Centro", "Av. 9 de Octubre 1318, entre Av. Quito y Av. Machala", "097 950 0609", "593979500609", "Buen día, me gustaría solicitar información.", "-2.1890315", "-79.8895277"),
+        Crear("Sede Milán", "Plaza Milán, km 12.5 vía Salitre", "093 941 8221", "593939418221", "Buen día, me gustaría solicitar información.", "-2.0387629", "-79.8700964"),
+    };
+}

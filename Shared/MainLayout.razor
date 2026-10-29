@@ -1,0 +1,359 @@
+﻿@implements IDisposable
+@using LaboratorioFront.Shared
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject LaboratorioFront.Services.ApiService Api
+
+@if (isLoading)
+{
+    <div class="kl-loadbar" role="progressbar" aria-label="Cargando datos"></div>
+}
+
+<div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 font-sans transition-colors duration-300">
+    <a href="#contenido" class="kl-skip" style="@(saltoVisible ? null : "position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden")" @onfocus="() => saltoVisible = true" @onblur="() => saltoVisible = false" @onclick="SaltarAlContenido" @onclick:preventDefault="true">Saltar al contenido</a>
+    <header class="kl-header bg-[#0d5c63]/90 backdrop-blur-xl border-b border-white/10 shadow-lg sticky top-0 z-50" @onkeydown="TeclaEnEncabezado">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="kl-header-row flex justify-between items-center">
+                <a href="/" class="flex-shrink-0 flex items-center min-h-[44px] rounded-lg" aria-label="Centro Médico Klinic, ir al inicio">
+                    <LogoKlinic />
+                </a>
+
+                <!-- Desktop Menu -->
+                <nav class="hidden md:flex space-x-6 items-center" aria-label="Principal">
+                    <NavLink href="/" class="kl-nav-link" Match="NavLinkMatch.All" aria-current="@Actual("")">Inicio</NavLink>
+                    <NavLink href="/Nosotros" class="kl-nav-link" aria-current="@Actual("nosotros")">Nosotros</NavLink>
+                    <NavLink href="/Contacto" class="kl-nav-link" aria-current="@Actual("contacto")">Contacto</NavLink>
+
+                    @if (isAdmin)
+                    {
+                        <NavLink href="/dashboard-admin" class="kl-nav-link font-bold" aria-current="@Actual("dashboard-admin")">Admin</NavLink>
+                    }
+                    @if (isCaja)
+                    {
+                        <NavLink href="/dashboard-caja" class="kl-nav-link font-bold" aria-current="@Actual("dashboard-caja")">Caja</NavLink>
+                    }
+                    @if (isCajaCitas)
+                    {
+                        <NavLink href="/dashboard-caja-citas" class="kl-nav-link font-bold" aria-current="@Actual("dashboard-caja-citas")">Citas</NavLink>
+                    }
+
+                    @if (isLoggedIn)
+                    {
+                        <button class="kl-btn kl-btn-sm bg-red-600 hover:bg-red-700 text-white" @onclick="Logout">Salir</button>
+                    }
+                    else
+                    {
+                        <button class="kl-btn kl-btn-m kl-btn-sm" @onclick="Login">Ingresar</button>
+                    }
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button @ref="burger" @onclick="ToggleMenu" class="kl-burger" aria-controls="kl-menu-movil" aria-label="@(isMenuOpen ? "Cerrar menú" : "Abrir menú")" aria-expanded="@(isMenuOpen ? "true" : "false")">
+                        <i class="fa-solid @(isMenuOpen ? "fa-xmark" : "fa-bars") text-2xl" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        @if (isMenuOpen)
+        {
+            <nav id="kl-menu-movil" aria-label="Menú móvil" class="md:hidden bg-white border-t border-gray-100 px-4 pt-2 pb-4 space-y-1 shadow-lg absolute w-full left-0">
+                <NavLink href="/" class="block px-3 py-3 rounded-md text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-[#0d5c63] dark:hover:text-turquesa-300 hover:bg-gray-50" Match="NavLinkMatch.All" aria-current="@Actual("")" @onclick="ToggleMenu">Inicio</NavLink>
+                <NavLink href="/Nosotros" class="block px-3 py-3 rounded-md text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-[#0d5c63] dark:hover:text-turquesa-300 hover:bg-gray-50" aria-current="@Actual("nosotros")" @onclick="ToggleMenu">Nosotros</NavLink>
+                <NavLink href="/Contacto" class="block px-3 py-3 rounded-md text-base font-semibold text-gray-700 dark:text-gray-200 hover:text-[#0d5c63] dark:hover:text-turquesa-300 hover:bg-gray-50" aria-current="@Actual("contacto")" @onclick="ToggleMenu">Contacto</NavLink>
+
+                @if (isAdmin)
+                {
+                    <NavLink href="/dashboard-admin" class="block px-3 py-3 rounded-md text-base font-bold text-[#0d5c63] bg-teal-50" aria-current="@Actual("dashboard-admin")" @onclick="ToggleMenu">Dashboard Admin</NavLink>
+                }
+                @if (isCaja)
+                {
+                    <NavLink href="/dashboard-caja" class="block px-3 py-3 rounded-md text-base font-bold text-[#0d5c63] bg-teal-50" aria-current="@Actual("dashboard-caja")" @onclick="ToggleMenu">Administrar Usuarios</NavLink>
+                }
+                @if (isCajaCitas)
+                {
+                    <NavLink href="/dashboard-caja-citas" class="block px-3 py-3 rounded-md text-base font-bold text-[#0d5c63] bg-teal-50" aria-current="@Actual("dashboard-caja-citas")" @onclick="ToggleMenu">Ver Citas</NavLink>
+                }
+
+                <div class="mt-4 px-3">
+                @if (isLoggedIn)
+                {
+                    <button class="kl-btn w-full bg-red-600 hover:bg-red-700 text-white" @onclick="() => { Logout(); ToggleMenu(); }">Cerrar Sesión</button>
+                }
+                else
+                {
+                    <button class="kl-btn kl-btn-m w-full" @onclick="() => { Login(); ToggleMenu(); }">Iniciar Sesión</button>
+                }
+                </div>
+            </nav>
+        }
+    </header>
+
+    <main id="contenido" tabindex="-1" class="flex-grow w-full kl-fade-@(navCount % 2) @(EsPaginaPublica ? "p-0" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8")">
+        @* Si una pantalla falla, el error queda dentro de este recuadro: el encabezado y el menu siguen funcionando *@
+        <ErrorBoundary @ref="errorBoundary">
+            <ChildContent>@Body</ChildContent>
+            <ErrorContent>
+                <div role="alert" class="m-6 p-6 rounded-xl border border-red-300 bg-red-50 text-red-900">
+                    <p class="font-bold mb-2">Ocurrió un error al mostrar esta pantalla.</p>
+                    <p class="mb-4">Recarga la página para continuar. Si vuelve a pasar, avisa al administrador.</p>
+                    <button type="button" class="kl-btn kl-btn-m" @onclick="RecargarPagina">Recargar</button>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
+    </main>
+
+    <aside aria-label="Accesos rápidos">
+    <!-- Floating Dark Mode Toggle -->
+    <button @onclick="ToggleDarkMode" aria-label="@(isDarkMode ? "Activar modo claro" : "Activar modo oscuro")" class="kl-fab-tema fixed bottom-6 right-6 bg-gray-800 dark:bg-yellow-400 text-white dark:text-gray-900 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50">
+        @if (isDarkMode)
+        {
+            <i class="fa-solid fa-sun text-2xl" aria-hidden="true"></i>
+        }
+        else
+        {
+            <i class="fa-solid fa-moon text-2xl" aria-hidden="true"></i>
+        }
+    </button>
+
+    @if (EsPaginaPublica)
+    {
+        <a class="kl-wa" href="https://wa.me/593939418221?text=Buen%20d%C3%ADa%2C%20me%20gustar%C3%ADa%20solicitar%20informaci%C3%B3n." target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp, se abre en una pestaña nueva">
+            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+        </a>
+    }
+    </aside>
+
+    @if (EsPaginaPublica)
+    {
+        <footer class="kl-footer mt-auto" id="contacto">
+            @if (!EsContacto)
+            {
+                <h2 class="kl-reveal">Comunícate con nosotros</h2>
+                <p class="kl-reveal" style="margin:0">Encuentra tu sede más cercana: estamos disponibles para ti en nuestras diferentes instalaciones.</p>
+                <SedesKlinic />
+            }
+            <div class="kl-footer-row" style="@(EsContacto ? "border-top:0;padding-top:0" : "")">
+                <div><a href="mailto:info@klinic.med.ec">info@klinic.med.ec</a></div>
+                <div class="kl-social">
+                    <a href="https://www.facebook.com/profile.php?id=100076061530792&locale=es_LA" target="_blank" rel="noopener" aria-label="Facebook, se abre en una pestaña nueva"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+                    <a href="https://www.instagram.com/klinic.med?igsh=bW8zMGE3eHVrYm94" target="_blank" rel="noopener" aria-label="Instagram, se abre en una pestaña nueva"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+                    <a href="https://ec.linkedin.com/company/centro-medico-klinic" target="_blank" rel="noopener" aria-label="LinkedIn, se abre en una pestaña nueva"><i class="fab fa-linkedin-in" aria-hidden="true"></i></a>
+                </div>
+                <div><button type="button" class="kl-pausa" @onclick="AlternarAnimaciones">@(animacionesPausadas ? "Reanudar animaciones" : "Pausar animaciones")</button></div>
+                <div>© @DateTime.Now.Year Centro Médico Klinic</div>
+            </div>
+        </footer>
+    }
+    else
+    {
+        <footer class="bg-[#0d5c63]/90 backdrop-blur-xl border-t border-white/10 text-white py-6 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-sm text-teal-100 font-medium">© @DateTime.Now.Year Centro Médico Klinic</p>
+                <div class="kl-social">
+                    <a href="https://www.facebook.com/profile.php?id=100076061530792&locale=es_LA" target="_blank" rel="noopener" aria-label="Facebook, se abre en una pestaña nueva"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>
+                    <a href="https://www.instagram.com/klinic.med?igsh=bW8zMGE3eHVrYm94" target="_blank" rel="noopener" aria-label="Instagram, se abre en una pestaña nueva"><i class="fab fa-instagram" aria-hidden="true"></i></a>
+                    <a href="https://ec.linkedin.com/company/centro-medico-klinic" target="_blank" rel="noopener" aria-label="LinkedIn, se abre en una pestaña nueva"><i class="fab fa-linkedin-in" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </footer>
+    }
+</div>
+
+@code {
+    private bool isLoggedIn;
+    private bool isAdmin;
+    private bool isCaja;
+    private bool isCajaCitas;
+    private bool isLoading = true;
+    private bool isDarkMode = false;
+
+    private bool isMenuOpen = false;
+    private bool animacionesPausadas = false;
+    private bool saltoVisible = false;
+    private ElementReference burger;
+    private ErrorBoundary? errorBoundary;
+
+    private void RecargarPagina() => Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    private int navCount = 0;
+    // En Contacto las sedes ya estan en la pagina: el pie solo muestra correo, redes y derechos
+    private bool EsContacto => Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/').Equals("contacto", StringComparison.OrdinalIgnoreCase);
+    // Inicio, Nosotros y Contacto llevan el pie grande con las sedes y el boton de WhatsApp
+    private bool EsPaginaPublica
+    {
+        get
+        {
+            var ruta = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+            return ruta.Equals("", StringComparison.OrdinalIgnoreCase) || ruta.Equals("nosotros", StringComparison.OrdinalIgnoreCase) || ruta.Equals("contacto", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+    private bool EsPaginaLogin => Navigation.Uri.Contains("/login", StringComparison.OrdinalIgnoreCase);
+
+    private void ToggleMenu() => isMenuOpen = !isMenuOpen;
+
+    // Esc cierra el menu movil y devuelve el foco al boton que lo abrio
+    private async Task TeclaEnEncabezado(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" && isMenuOpen)
+        {
+            isMenuOpen = false;
+            await burger.FocusAsync();
+        }
+    }
+
+    private async Task SaltarAlContenido()
+    {
+        saltoVisible = false;
+        try { await JS.InvokeVoidAsync("klinic.saltar", "contenido"); } catch { }
+    }
+
+    private async Task AlternarAnimaciones()
+    {
+        try { animacionesPausadas = await JS.InvokeAsync<bool>("klinic.alternarAnimaciones"); } catch { }
+    }
+
+    // "page" cuando el enlace apunta a la pagina actual (ruta relativa en minusculas, "" es el inicio)
+    private string? Actual(string ruta)
+    {
+        var actual = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+        return actual.Equals(ruta, StringComparison.OrdinalIgnoreCase) ? "page" : null;
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        try { isDarkMode = await JS.InvokeAsync<bool>("toggleDarkMode"); }
+        catch { isDarkMode = !isDarkMode; await JS.InvokeVoidAsync("eval", "document.documentElement.classList.toggle('dark')"); }
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                isDarkMode = await JS.InvokeAsync<bool>("isDarkMode");
+                animacionesPausadas = await JS.InvokeAsync<bool>("klinic.animacionesPausadas");
+                StateHasChanged();
+            }
+            catch { }
+        }
+
+        // Los elementos .kl-reveal (pie, tarjetas) aparecen al entrar en pantalla
+        try { await JS.InvokeVoidAsync("klinic.reveal"); } catch { }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        await LoadUserStateAsync();
+    }
+
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        // async void: una excepcion aqui tumbaria toda la aplicacion, por eso va protegido
+        try
+        {
+            errorBoundary?.Recover();
+            isLoading = true;
+            navCount++;
+            isMenuOpen = false;
+            StateHasChanged();
+
+            await LoadUserStateAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cambiar de pantalla: " + ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUserStateAsync()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("laboratorio.getToken");
+            isLoggedIn = !string.IsNullOrEmpty(token);
+
+            if (isLoggedIn)
+            {
+                Api.SetToken(token);
+
+                var payload = token.Split('.')[1];
+                var payloadStr = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(payload)));
+                var payloadJson = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(payloadStr);
+
+                if (payloadJson != null)
+                {
+                    var roleClaim = payloadJson.FirstOrDefault(x =>
+                        x.Key.Equals("role", StringComparison.OrdinalIgnoreCase)).Value?.ToString();
+
+                    isAdmin = roleClaim == "Admin";
+                    isCaja = roleClaim == "Caja" || roleClaim == "UsuarioCaja";
+                    isCajaCitas = roleClaim == "CajaCitas";
+                }
+            }
+            else
+            {
+                isAdmin = false;
+                isCaja = false;
+                isCajaCitas = false;
+            }
+        }
+        catch
+        {
+            isLoggedIn = false;
+            isAdmin = false;
+            isCaja = false;
+                isCajaCitas = false;
+        }
+        finally
+        {
+            // Aseguramos que el loading termine al finalizar la carga de sesion inicial
+            isLoading = false;
+        }
+    }
+
+    private string PadBase64(string base64)
+    {
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return base64.Replace('-', '+').Replace('_', '/');
+    }
+
+    private async Task Logout()
+    {
+        isLoading = true;
+        // Limpia "token" y "jwt_token": si queda uno, al recargar la API volveria a recibir la sesion anterior
+        try { await JS.InvokeVoidAsync("laboratorio.removeToken"); } catch { }
+        try { await Api.LogoutAsync(); } catch { }
+        Api.SetToken(null);
+        isLoggedIn = false;
+        isAdmin = false;
+        isCaja = false;
+                isCajaCitas = false;
+        isLoading = false;
+        Navigation.NavigateTo("/login");
+    }
+
+    private void Login()
+    {
+        Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

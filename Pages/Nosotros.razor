@@ -1,0 +1,20 @@
+@page "/nosotros"
+@inject IJSRuntime JS
+<PageTitle>Nosotros | Centro Médico Klinic</PageTitle>
+
+<section class="kl-section" aria-labelledby="kl-nos-titulo">
+    <h1 id="kl-nos-titulo" class="kl-page-title kl-up kl-d1">Sobre nosotros</h1>
+    <p class="kl-page-lead kl-up kl-d2">En Klinic brindamos atención médica integral y especializada, respaldada por un equipo de profesionales altamente capacitados. Nuestra labor se fundamenta en la excelencia clínica, el uso de tecnología de vanguardia y un compromiso constante con la salud y el bienestar de cada paciente.</p>
+
+    <div class="kl-cards">
+        <article class="kl-card kl-reveal"><div class="kl-ico" aria-hidden="true"><i class="fa-solid fa-hospital"></i></div><h2>Prestador externo del IESS</h2><p>Atendemos las citas médicas del IESS en Centro Médico Klinic. Agéndalas por IzyBot o llamando al 140.</p></article>
+        <article class="kl-card kl-reveal"><div class="kl-ico" aria-hidden="true"><i class="fa-solid fa-user-doctor"></i></div><h2>Equipo especializado</h2><p>Médicos por especialidad en consulta externa, con laboratorio, ecografía y farmacia en un solo lugar.</p></article>
+        <article class="kl-card kl-reveal"><div class="kl-ico" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></div><h2>Dos sedes</h2><p>Sede Centro, Sede Milán. Encuentra la más cercana en <a href="/Contacto" class="underline font-semibold">Contacto</a>.</p></article>
+    </div>
+</section>
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try { await JS.InvokeVoidAsync("klinic.reveal"); } catch { }
+    }
+}

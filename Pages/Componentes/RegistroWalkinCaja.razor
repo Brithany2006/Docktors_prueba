@@ -1,0 +1,467 @@
+﻿@using LaboratorioFront.Services
+@using LaboratorioFront.Services.Models
+@inject DerivacionesService Service
+@inject Microsoft.JSInterop.IJSRuntime JS
+@inject TokenStore Tokens
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-3xl mx-auto my-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Registro de pacientes</h2>
+    
+    <h4 class="font-bold text-turquesa-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-user"></i> Datos del Paciente</h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">CÉDULA/RUC:</label>
+            <input type="text" @bind="nuevoPaciente.Cedula" @bind:event="oninput" @onchange="BuscarPaciente" maxlength="13" onkeyup="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none transition-all" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo:</label>
+            <input type="text" @bind="nuevoPaciente.NombreCompleto" maxlength="60" onkeyup="this.value = this.value.replace(/[^a-zA-ZaeiouAEIOUnN\s]/g, '')" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none transition-all" />
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono:</label>
+            <input type="text" @bind="nuevoPaciente.Telefono" maxlength="10" onkeyup="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none transition-all" />
+        </div>
+    </div>
+
+    <h4 class="font-bold text-turquesa-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-stethoscope"></i> Datos de la Derivación</h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Especialidad Requerida:</label>
+            <select @bind="nuevaDerivacion.EspecialidadRequerida" disabled="@(tipoPaciente == "EkgCaja")" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none bg-white disabled:bg-gray-100">
+                <option value="">Seleccione...</option>
+                @foreach (var e in especialidades)
+                {
+                    <option value="@e">@e</option>
+                }
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de paciente:</label>
+            <div class="flex flex-wrap gap-6">
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="radio" name="tipoPacienteCaja" checked="@(tipoPaciente == "Particular")" @onclick='() => SeleccionarTipo("Particular")' />
+                    Particular
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="radio" name="tipoPacienteCaja" checked="@(tipoPaciente == "EkgCaja")" @onclick='() => SeleccionarTipo("EkgCaja")' />
+                    EKG sin código de validación (solo electrocardiograma)
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input type="radio" name="tipoPacienteCaja" checked="@(tipoPaciente == "OtroCentro")" @onclick='() => SeleccionarTipo("OtroCentro")' />
+                    Derivado de otro centro médico
+                </label>
+            </div>
+        </div>
+        @if (tipoPaciente == "EkgCaja")
+        {
+            <div class="md:col-span-2 p-3 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-800">
+                El sistema asigna un código interno (EKGCAJA001, EKGCAJA002...). Solo para electrocardiograma.
+            </div>
+        }
+        @if (tipoPaciente == "OtroCentro")
+        {
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Centro Médico de Origen: <span class="text-red-500">*</span></label>
+                <input type="text" @bind="nuevaDerivacion.InstitucionReferente" maxlength="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none transition-all" placeholder="Ej: Clínica Kennedy" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Código de validación: <span class="text-red-500">*</span></label>
+                <input type="text" @bind="codigoValidacion" @bind:event="oninput" maxlength="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none transition-all" placeholder="Código de la derivación" />
+            </div>
+        }
+    </div>
+
+    <div class="flex justify-end pt-4 border-t border-gray-100">
+        <button @onclick="GuardarYAgendar" disabled="@isSaving" class="px-6 py-2.5 bg-turquesa-600 hover:bg-turquesa-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center gap-2 disabled:bg-gray-400">
+            @if(isSaving) { <i class="fa-solid fa-spinner fa-spin"></i> } else { <i class="fa-solid fa-calendar-check"></i> }
+            Crear y Agendar Cita
+        </button>
+    </div>
+</div>
+
+@if (mostrarModal)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col my-auto">
+            <div class="p-6 bg-turquesa-50 border-b border-turquesa-100 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-bold text-turquesa-900 m-0"><i class="fa-solid fa-calendar-check mr-2"></i> Agendar Cita: @nuevoPaciente.NombreCompleto</h3>
+                <button @onclick="CerrarModal" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex flex-col gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Sucursal</label>
+                        <select @bind="sucursalseleccionada" @bind:after="() => { idDoctorSeleccionado = 0; AlCambiarDoctor(); }" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none bg-white">
+                            <option value="Centro">Centro</option>
+                            <option value="Milan">Milan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Doctor</label>
+                        <select @bind="idDoctorSeleccionado" @bind:after="AlCambiarDoctor" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none bg-white">
+                            <option value="0">Seleccione un doctor...</option>
+                            @foreach(var doc in doctoresAMostrar.Where(d => CoincideDoctor(d, nuevaDerivacion.EspecialidadRequerida) && d.Sucursal == sucursalseleccionada))
+                            {
+                                <option value="@doc.Id">@doc.Nombre - @doc.Consultorio (@doc.Sucursal)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @if (idDoctorSeleccionado > 0)
+                {
+                    <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                        <button @onclick="MesAnterior" class="p-2 rounded-lg text-turquesa-600 hover:bg-turquesa-50 font-bold transition-colors"><i class="fa-solid fa-chevron-left mr-2"></i> Anterior</button>
+                        <h4 class="text-xl font-bold text-gray-800 m-0 capitalize">@mesActual.ToString("MMMM yyyy")</h4>
+                        <button @onclick="MesSiguiente" class="p-2 rounded-lg text-turquesa-600 hover:bg-turquesa-50 font-bold transition-colors">Siguiente <i class="fa-solid fa-chevron-right ml-2"></i></button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                        <div class="flex flex-wrap gap-3">
+                            @foreach (var dia in calendario)
+                            {
+                                var dt = DateTime.Parse(dia.Fecha);
+                                var isSelected = diaSeleccionado?.Fecha == dia.Fecha;
+                                var isPast = dt.Date < DateTime.Today;
+                                var isValidoParaCita = !isPast;
+                                var opacity = isPast ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:shadow-md";
+                                var ring = isSelected ? "ring-2 ring-turquesa-500 shadow-md" : "border border-gray-200";
+                                
+                                <div @onclick="() => isValidoParaCita ? SeleccionarDia(dia) : null" class="w-24 h-24 rounded-lg p-2 relative flex flex-col transition-all @opacity @ring" style="background-color: @(isSelected ? "#e6fffa" : GetColorTailwind(dia.Color));">
+                                    <div class="text-center">
+                                        <div class="text-xs font-semibold text-gray-500 uppercase">@dt.ToString("ddd", new System.Globalization.CultureInfo("es-ES"))</div>
+                                        <div class="text-xl font-bold text-gray-800">@dt.ToString("dd/MM")</div>
+                                    </div>
+                                    @if(dia.TotalSlots > 0 && isValidoParaCita)
+                                    {
+                                        <div class="mt-auto text-[10px] font-medium text-gray-600 text-center leading-tight bg-white/80 rounded px-1">
+                                            Disp: @(dia.TotalSlots - dia.Citas)
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @if(calendario.Count == 0)
+                            {
+                                <div class="w-full text-center p-8 text-gray-400 font-medium">No hay dias de atencion disponibles.</div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (diaSeleccionado != null && slotsDisponibles != null)
+                    {
+                        <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-regular fa-clock text-turquesa-500"></i> Horarios para el @DateTime.Parse(diaSeleccionado.Fecha).ToString("dd/MM/yyyy")</h4>
+                            <div class="flex flex-wrap gap-2">
+                                @if(slotsDisponibles.Count == 0) { <div class="w-full p-3 bg-red-50 text-red-600 rounded-lg text-sm">No hay turnos disponibles. Puedes agregar un turno extra.</div> }
+                                @if(!mostrarTurnoExtra)
+                                {
+                                    <div class="w-full">
+                                        <button type="button" @onclick="() => mostrarTurnoExtra = true" class="px-3 py-1 bg-turquesa-600 text-white rounded-lg font-bold text-xs shadow hover:bg-turquesa-700">+ Agregar turno extra</button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                        <h5 class="font-bold text-yellow-800 mb-2">Turno Extra</h5>
+                                        <div class="flex flex-wrap items-center gap-4">
+                                            <label class="text-sm font-semibold text-gray-700">Hora:</label>
+                                            <input type="time" @bind="horaTurnoExtra" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquesa-500 outline-none" />
+                                            <button type="button" @onclick="ConfirmarSeleccionExtra" class="px-4 py-2 bg-yellow-500 text-white font-bold rounded-lg hover:bg-yellow-600 shadow">Seleccionar</button>
+                                            <button type="button" @onclick="CancelarTurnoExtra" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg">Cancelar</button>
+                                        </div>
+                                        @if (esTurnoExtra && !string.IsNullOrEmpty(slotSeleccionado))
+                                        {
+                                            <p class="mt-2 text-sm font-semibold text-yellow-800">Turno extra seleccionado: @slotSeleccionado</p>
+                                        }
+                                    </div>
+                                }
+                                @foreach(var slot in slotsDisponibles)
+                                {
+                                    <button @onclick="() => { slotSeleccionado = slot; esTurnoExtra = false; }" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all border @(slotSeleccionado == slot ? "bg-turquesa-500 text-white border-turquesa-600 shadow-md transform scale-105" : "bg-white text-gray-700 hover:border-turquesa-400 hover:bg-turquesa-50")">@slot</button>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+            
+            <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+                <button @onclick="CerrarModal" class="px-5 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-200">Cancelar</button>
+                <button @onclick="ConfirmarAgendamiento" disabled="@(string.IsNullOrEmpty(slotSeleccionado))" class="px-5 py-2.5 rounded-xl font-medium text-white shadow-md @(!string.IsNullOrEmpty(slotSeleccionado) ? "bg-turquesa-600 hover:bg-turquesa-700" : "bg-gray-400 cursor-not-allowed")">
+                    <i class="fa-solid fa-check mr-2"></i> Confirmar Cita
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PacienteDerivacion nuevoPaciente = new();
+    private Derivacion nuevaDerivacion = new() { FechaEmision = DateTime.Today };
+    private List<string> especialidades = new();
+    private List<Doctor> doctoresAMostrar = new();
+    private bool isSaving = false;
+    private string tipoPaciente = "Particular";
+    private string codigoValidacion = string.Empty;
+    
+    private bool mostrarModal = false;
+    private string sucursalseleccionada = "Centro";
+    private int idDoctorSeleccionado = 0;
+    private DateTime mesActual = DateTime.Today;
+    private List<DerivacionesService.CapacidadDia> calendario = new();
+    private DerivacionesService.CapacidadDia? diaSeleccionado;
+    private List<string>? slotsDisponibles;
+    private string? slotSeleccionado;
+
+    // Turno extra: una hora fuera de los turnos libres (misma opcion que tiene el administrador)
+    private bool mostrarTurnoExtra = false;
+    private TimeOnly horaTurnoExtra = new TimeOnly(12, 0);
+    private bool esTurnoExtra = false;
+
+    private void ConfirmarSeleccionExtra()
+    {
+        slotSeleccionado = horaTurnoExtra.ToString("HH:mm");
+        esTurnoExtra = true;
+    }
+
+    private void CancelarTurnoExtra()
+    {
+        mostrarTurnoExtra = false;
+        if (esTurnoExtra) { esTurnoExtra = false; slotSeleccionado = null; }
+    }
+
+    // Electrocardiograma: el nombre en la lista puede ser EKG o ELECTROCARDIOGRAMA
+    private static bool EsEkg(string? especialidad)
+    {
+        var e = (especialidad ?? string.Empty).Trim();
+        return e.Equals("EKG", StringComparison.OrdinalIgnoreCase) || e.Equals("ELECTROCARDIOGRAMA", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void SeleccionarTipo(string tipo)
+    {
+        var veniaDeEkg = tipoPaciente == "EkgCaja";
+        tipoPaciente = tipo;
+        if (tipo == "EkgCaja")
+        {
+            // Solo electrocardiograma: se fija la especialidad y no se puede cambiar
+            nuevaDerivacion.EspecialidadRequerida = especialidades.FirstOrDefault(EsEkg) ?? "ELECTROCARDIOGRAMA";
+        }
+        else if (veniaDeEkg)
+        {
+            nuevaDerivacion.EspecialidadRequerida = string.Empty;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        especialidades = await Service.GetEspecialidadesAsync();
+        doctoresAMostrar = await Service.GetDoctoresAsync("");
+    }
+    
+    private async Task BuscarPaciente()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoPaciente.Cedula) || nuevoPaciente.Cedula.Length < 10) return;
+        var ex = await Service.BuscarPacientePorCedulaAsync(nuevoPaciente.Cedula);
+        if (ex != null && ex.Id > 0)
+        {
+            nuevoPaciente = ex;
+        }
+    }
+    
+    private async Task GuardarYAgendar()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoPaciente.Cedula) || string.IsNullOrWhiteSpace(nuevoPaciente.NombreCompleto))
+        {
+            await JS.InvokeVoidAsync("alert", "Complete los datos del paciente."); return;
+        }
+        if (string.IsNullOrWhiteSpace(nuevaDerivacion.EspecialidadRequerida))
+        {
+            await JS.InvokeVoidAsync("alert", "Seleccione especialidad."); return;
+        }
+        if (tipoPaciente == "EkgCaja" && !EsEkg(nuevaDerivacion.EspecialidadRequerida))
+        {
+            await JS.InvokeVoidAsync("alert", "El registro sin código de validación es solo para electrocardiograma."); return;
+        }
+        if (tipoPaciente == "OtroCentro")
+        {
+            if (string.IsNullOrWhiteSpace(nuevaDerivacion.InstitucionReferente))
+            {
+                await JS.InvokeVoidAsync("alert", "Indique el centro médico de origen."); return;
+            }
+            if (string.IsNullOrWhiteSpace(codigoValidacion))
+            {
+                await JS.InvokeVoidAsync("alert", "Ingrese el código de validación de la derivación."); return;
+            }
+        }
+        
+        isSaving = true;
+        
+        if (nuevoPaciente.Id == 0)
+        {
+            var p = await Service.CreatePacienteAsync(nuevoPaciente);
+            if (p != null) nuevoPaciente = p;
+        }
+
+        nuevaDerivacion.IdPaciente = nuevoPaciente.Id;
+        if (tipoPaciente == "OtroCentro")
+        {
+            nuevaDerivacion.CodigoValidacion = codigoValidacion.Trim();
+            nuevaDerivacion.Observaciones = "Centro de origen: " + nuevaDerivacion.InstitucionReferente.Trim();
+        }
+        else if (tipoPaciente == "EkgCaja")
+        {
+            // El API reemplaza esta marca por el siguiente codigo (EKGCAJA001, 002...)
+            nuevaDerivacion.CodigoValidacion = "EKGCAJA";
+            nuevaDerivacion.Observaciones = "EKG sin codigo de validacion (Caja)";
+            nuevaDerivacion.InstitucionReferente = string.Empty;
+        }
+        else
+        {
+            // Sin derivacion: el codigo interno es unico para no chocar con la regla de "codigo ya en uso"
+            nuevaDerivacion.CodigoValidacion = "PARTICULAR-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant();
+            nuevaDerivacion.Observaciones = "Paciente particular";
+            nuevaDerivacion.InstitucionReferente = string.Empty;
+        }
+        var (result, errorCrear) = await Service.CreateDerivacionConErrorAsync(nuevaDerivacion);
+        
+        isSaving = false;
+        
+        if (result != null)
+        {
+            nuevaDerivacion = result;
+            AbrirModalAgendar();
+        }
+        else {
+            await JS.InvokeVoidAsync("alert", errorCrear);
+        }
+    }
+    
+    private void AbrirModalAgendar()
+    {
+        idDoctorSeleccionado = 0;
+        slotsDisponibles = null;
+        slotSeleccionado = null;
+        diaSeleccionado = null;
+        mostrarTurnoExtra = false;
+        esTurnoExtra = false;
+
+        var docMatching = doctoresAMostrar.FirstOrDefault(doc => CoincideDoctor(doc, nuevaDerivacion.EspecialidadRequerida));
+        if (docMatching != null) {
+            sucursalseleccionada = docMatching.Sucursal;
+        }
+        
+        mostrarModal = true;
+        StateHasChanged();
+    }
+    
+    private async Task AlCambiarDoctor()
+    {
+        if (idDoctorSeleccionado > 0)
+        {
+            mesActual = DateTime.Today;
+            await CargarCalendario();
+            diaSeleccionado = calendario.FirstOrDefault(d => d.Fecha == DateTime.Today.ToString("yyyy-MM-dd"));
+            if (diaSeleccionado != null) await SeleccionarDia(diaSeleccionado);
+        }
+    }
+    
+    private async Task CargarCalendario()
+    {
+        calendario = await Service.GetCalendarioDoctorAsync(idDoctorSeleccionado, mesActual.Year, mesActual.Month);
+    }
+    
+    private async Task MesAnterior() { mesActual = mesActual.AddMonths(-1); await CargarCalendario(); }
+    private async Task MesSiguiente() { if (mesActual < new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(3)) { mesActual = mesActual.AddMonths(1); await CargarCalendario(); } }
+    
+    private async Task SeleccionarDia(DerivacionesService.CapacidadDia dia)
+    {
+        diaSeleccionado = dia;
+        slotSeleccionado = null;
+        mostrarTurnoExtra = false;
+        esTurnoExtra = false;
+        slotsDisponibles = await Service.GetAvailableSlotsAsync(idDoctorSeleccionado, DateTime.Parse(dia.Fecha), EsEcoDerivacion(nuevaDerivacion.EspecialidadRequerida));
+    }
+    
+    private async Task ConfirmarAgendamiento()
+    {
+        var fechaHora = DateTime.Parse(diaSeleccionado.Fecha + " " + slotSeleccionado);
+        var conflicto = await Service.VerificarConflictoHorarioAsync(idDoctorSeleccionado, fechaHora, null, nuevaDerivacion.Id, nuevoPaciente.Cedula);
+        if (conflicto.HayConflicto)
+        {
+            bool continuar = await JS.InvokeAsync<bool>("confirm", conflicto.Mensaje);
+            if (!continuar) return;
+        }
+        var cita = new LaboratorioFront.Services.DerivacionesService.CitaDerivacion
+        {
+            IdDerivacion = nuevaDerivacion.Id,
+            IdDoctor = idDoctorSeleccionado,
+            FechaHora = fechaHora,
+            Estado = "Pendiente",
+            EsSubsecuente = false,
+            EsTurnoExtra = esTurnoExtra
+        };
+        var res = await Service.AgendarCitaAsync(cita);
+        if (res.Exito)
+        {
+            await JS.InvokeVoidAsync("alert", "¡Cita agendada exitosamente!");
+            nuevoPaciente = new();
+            nuevaDerivacion = new() { FechaEmision = DateTime.Today };
+        codigoValidacion = string.Empty;
+        tipoPaciente = "Particular";
+            CerrarModal();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Error: " + res.Mensaje);
+        }
+    }
+    
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+        nuevoPaciente = new();
+        nuevaDerivacion = new() { FechaEmision = DateTime.Today };
+        codigoValidacion = string.Empty;
+        tipoPaciente = "Particular";
+    }
+    
+    private string GetColorTailwind(string color)
+    {
+        if (color == "red") return "#fecaca";
+        if (color == "yellow") return "#fef08a";
+        if (color == "green") return "#dcfce7";
+        return "#ffffff";
+    }
+    
+    // Ecocardiograma: solo lo atiende el doctor marcado por el API (Dr. Toro de Centro); el resto, como siempre
+    private static bool EsEcoDerivacion(string? especialidad) => (especialidad ?? "").IndexOf("ECOCARDIO", StringComparison.OrdinalIgnoreCase) >= 0;
+    private bool CoincideDoctor(Doctor doc, string reqEspecialidad) =>
+        EsEcoDerivacion(reqEspecialidad) ? doc.AtiendeEco : CoincideEspecialidad(doc.Especialidad, reqEspecialidad);
+
+    private bool CoincideEspecialidad(string docEspecialidad, string reqEspecialidad)
+    {
+        if (string.IsNullOrEmpty(docEspecialidad) || string.IsNullOrEmpty(reqEspecialidad)) return false;
+        var doc = docEspecialidad.ToUpper(); var req = reqEspecialidad.ToUpper();
+        if (doc.Contains("CARDIO") && req.Contains("CARDIO") && !req.Contains("ELECTRO") && !doc.Contains("ELECTRO")) return true;
+        if (doc.Contains("ELECTRO") && req.Contains("ELECTRO")) return true;
+        if (doc.Contains("GINECO") && req.Contains("GINECO")) return true;
+        if (doc.Contains("PEDIATRIA") && req.Contains("PEDIATRIA")) return true;
+        if (doc.Contains("NEURO") && req.Contains("NEURO")) return true;
+        if (doc.Contains("GASTRO") && req.Contains("GASTRO")) return true;
+        if (doc.Contains("MEDICINA INTERNA") && req.Contains("MEDICINA INTERNA")) return true;
+        if (doc.Contains("TRAUMATOLOGIA") && req.Contains("TRAUMATOLOGIA")) return true;
+        if (doc.Contains("ENDOCRINO") && req.Contains("ENDOCRINO")) return true;
+        if (doc.Contains("NEFRO") && req.Contains("NEFRO")) return true;
+        if (doc.Contains("UROLOGIA") && req.Contains("UROLOGIA")) return true;
+        if (doc.Contains("NEUMO") && req.Contains("NEUMO")) return true;
+        if (doc.Contains("OTORRINO") && req.Contains("OTORRINO")) return true;
+        if (doc.Contains("OFTALMO") && req.Contains("OFTALMO")) return true;
+        if (doc.Contains("DERMATO") && req.Contains("DERMATO")) return true;
+        if (doc.Contains("ONCO") && req.Contains("ONCO")) return true;
+        return doc == req;
+    }
+}
+
+
+

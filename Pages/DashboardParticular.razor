@@ -1,0 +1,13 @@
+﻿@page "/particular"
+@attribute [Authorize(Roles = "Particular")]
+<PageTitle>Pacientes particulares | Centro Médico Klinic</PageTitle>
+
+<h3>Dashboard Caja</h3>
+
+<div class="admin-card">
+    <p>Desde aqui puedes registrar pacientes particulares.</p>
+
+    <NavLink class="btn btn-primary" href="/caja/crear-paciente">
+        ➕ Crear paciente particular
+    </NavLink>
+</div>

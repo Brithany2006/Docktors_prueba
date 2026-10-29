@@ -1,0 +1,516 @@
+@using LaboratorioFront.Services
+@using static LaboratorioFront.Services.ApiService
+@page "/mis-resultados"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Paciente")]
+@inject LaboratorioFront.Services.ApiService Api
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<div class="p-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Mis Resultados</h1>
+            <p class="text-gray-500 mt-1">@miNombreCompleto</p>
+        </div>
+        <button class="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center" @onclick="CargarDatos">
+            <i class="fa-solid fa-arrows-rotate mr-2 @(isLoading ? "fa-spin" : "")"></i> Actualizar
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex flex-col items-center justify-center py-20">
+            <div class="custom-spinner mb-4"></div>
+            <p class="text-gray-500 font-medium animate-pulse">Cargando tus resultados...</p>
+        </div>
+    }
+    else
+    {
+        @if (citas != null && citas.Any())
+        {
+            <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa-solid fa-laptop-medical text-turquesa-500 mr-2"></i> Resultados Recientes
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                @foreach (var cita in citas)
+                {
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="border-b border-gray-100 bg-gray-50 p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-gray-900 text-lg">Cita #@cita.Id</h3>
+                                <span class="px-2.5 py-1 bg-turquesa-100 text-turquesa-800 text-xs font-bold rounded-full border border-turquesa-200">
+                                    @cita.FechaAtencion?.ToString("dd MMM yyyy")
+                                </span>
+                            </div>
+                            <p class="text-sm font-medium text-gray-600 truncate"><i class="fa-solid fa-user-injured mr-1 text-gray-400"></i> @cita.Paciente</p>
+                        </div>
+                        <div class="p-4 bg-white flex justify-between gap-2">
+                            <a class="flex-1 flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-turquesa-500 hover:bg-turquesa-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors cursor-pointer" 
+                               @onclick="() => AbrirDetalleOdoo(cita)">
+                                Ver Detalles <i class="fa-solid fa-arrow-right ml-2"></i>
+                            </a>
+                            <a class="flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquesa-500 transition-colors" 
+                               href="@Api.BuildOdooPacienteEspecificoZipUrl(miRuc, miCedula)" target="_blank" title="Descargar resultados en ZIP">
+                                <i class="fa-solid fa-file-zipper text-rojo-500"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (pacienteAntiguo == null)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-inbox text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">No hay resultados</h3>
+                <p class="text-gray-500">Aún no tienes resultados disponibles en el sistema.</p>
+            </div>
+        }
+
+        @if (pacienteAntiguo != null)
+        {
+            <div class="mt-12">
+                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-box-archive text-gray-500 mr-2"></i> Resultados Históricos
+                </h4>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paciente</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-turquesa-100 flex items-center justify-center text-turquesa-700 font-bold">
+                                                <i class="fa-solid fa-user"></i>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">@pacienteAntiguo.NombreCompleto</div>
+                                                <div class="text-xs text-gray-500">Histórico</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end gap-2">
+                                            <button @onclick="() => AbrirModalLegacy(pacienteAntiguo)" class="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold">
+                                                <i class="fa-solid fa-folder-open mr-2 text-turquesa-600"></i> Ver Archivos
+                                            </button>
+                                            <a class="flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold" 
+                                               href="@Api.BuildLegacyZipUrl(pacienteAntiguo.NombreCompleto, "")" target="_blank" title="Descargar ZIP">
+                                                <i class="fa-solid fa-file-zipper text-rojo-500"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@if (mostrarModalOdoo && citaSeleccionada != null)
+{
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-turquesa-100 flex items-center justify-center text-turquesa-600 mr-3">
+                        <i class="fa-solid fa-microscope"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Cita #@citaSeleccionada.Id</h3>
+                        <p class="text-sm text-gray-500">@citaSeleccionada.FechaAtencion?.ToString("dd MMM yyyy")</p>
+                    </div>
+                </div>
+                <button @onclick="CerrarModalOdoo" class="text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto bg-gray-50 flex-1">
+                @if (citaSeleccionada.Examenes != null && citaSeleccionada.Examenes.Any())
+                {
+                    <div class="space-y-4">
+                        @foreach (var res in citaSeleccionada.Examenes)
+                        {
+                            <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-1 pr-4">
+                                        <h4 class="font-bold text-gray-800 text-lg">@res.Nombre</h4>
+                                        <p class="text-sm text-gray-500 mt-1"><i class="fa-solid fa-hashtag text-gray-400 mr-1"></i> ID Resultado: @res.IdSubstudy</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @("Validado".Equals("validado", StringComparison.OrdinalIgnoreCase) ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")">
+                                        @("Validado".ToUpper())
+                                    </span>
+                                </div>
+                                
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <h5 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Archivos Disponibles</h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        @if (res.TieneAdjunto1)
+                                        {
+                                            <a href="@Api.BuildOdooArchivoUrl(res.IdSubstudy)" target="_blank" class="flex items-center p-3 border border-gray-200 rounded-lg hover:border-turquesa-300 hover:bg-turquesa-50 transition-colors group">
+                                                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-red-100 text-red-500 group-hover:bg-red-200 transition-colors">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-semibold text-gray-700 truncate group-hover:text-turquesa-700">@res.Adjunto1Nombre</p>
+                                                    <p class="text-xs text-gray-500 truncate">Descargar</p>
+                                                </div>
+                                            </a>
+                                        }
+                                        @if(res.TieneAdjunto2)
+                                        {
+                                            <a href="@Api.BuildOdooArchivo2Url(res.IdSubstudy)" target="_blank" class="flex items-center p-3 border border-gray-200 rounded-lg hover:border-turquesa-300 hover:bg-turquesa-50 transition-colors group">
+                                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-500 group-hover:bg-red-200 flex items-center justify-center mr-3 transition-colors">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-semibold text-gray-700 truncate group-hover:text-turquesa-700">@res.Adjunto2Nombre</p>
+                                                    <p class="text-xs text-gray-500 truncate">Descargar</p>
+                                                </div>
+                                            </a>
+                                        }
+                                        @if(!string.Equals(res.TipoResultado, "LABORATORIO", StringComparison.OrdinalIgnoreCase) && !string.Equals(res.TipoResultado, "PSICOLOGIA", StringComparison.OrdinalIgnoreCase) && !res.TipoResultado.StartsWith("FICHA", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <a href="@Api.BuildOdooInformePdfUrl(res.IdSubstudy)" target="_blank" class="flex items-center p-3 border border-gray-200 rounded-lg hover:border-turquesa-300 hover:bg-turquesa-50 transition-colors group">
+                                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-500 group-hover:bg-red-200 flex items-center justify-center mr-3 transition-colors">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-semibold text-gray-700 truncate group-hover:text-turquesa-700">Ver Informe PDF</p>
+                                                    <p class="text-xs text-gray-500 truncate">Descargar Informe</p>
+                                                </div>
+                                            </a>
+                                        }
+                                        @if(!res.TieneAdjunto1 && !res.TieneAdjunto2 && (string.Equals(res.TipoResultado, "PSICOLOGIA", StringComparison.OrdinalIgnoreCase) || res.TipoResultado.StartsWith("FICHA", StringComparison.OrdinalIgnoreCase)))
+                                        {
+                                            <div class="col-span-1 sm:col-span-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 p-2.5 rounded-lg flex items-center">
+                                                <i class="fa-solid fa-clock mr-2 text-amber-500"></i> Documento en proceso de carga por el especialista
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-10">
+                        <i class="fa-solid fa-folder-open text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">No hay detalles disponibles para esta cita.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalLegacy && pacienteLegacySeleccionado != null)
+{
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-turquesa-100 flex items-center justify-center text-turquesa-600 mr-3">
+                        <i class="fa-solid fa-box-archive"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Archivos de @pacienteLegacySeleccionado.NombreCompleto</h3>
+                        <p class="text-sm text-gray-500">Resultados Históricos</p>
+                    </div>
+                </div>
+                <button @onclick="CerrarModalLegacy" class="text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto bg-white flex-1">
+                @if (isLoadingLegacyDetails)
+                {
+                    <div class="flex flex-col items-center justify-center py-12">
+                        <div class="custom-spinner mb-4"></div>
+                        <p class="text-gray-500 font-medium animate-pulse">Cargando archivos...</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <i class="fa-solid fa-flask text-turquesa-500 mr-2"></i> Laboratorio
+                            </h4>
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                @if (!string.IsNullOrEmpty(pacienteLegacySeleccionado?.NombreArchivo))
+                                {
+                                    <div class="space-y-3">
+                                         
+                                        <button class="w-full flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:border-turquesa-300 hover:shadow-sm transition-all group text-left" @onclick="() => VerPdfAntiguo(pacienteLegacySeleccionado.NombreArchivo)">
+                                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 text-red-500 group-hover:bg-red-500 group-hover:text-white flex items-center justify-center mr-3 transition-colors">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-semibold text-gray-700 truncate group-hover:text-turquesa-700">@pacienteLegacySeleccionado.NombreArchivo</p>
+                                                    <p class="text-xs text-gray-500 truncate">Ver documento</p>
+                                                </div>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-gray-500 text-sm italic text-center py-4">No hay resultados de laboratorio.</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center border-b pb-2">
+                                <i class="fa-solid fa-x-ray text-turquesa-500 mr-2"></i> Imágenes
+                            </h4>
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                @if (legacyRxInformes.Any() || legacyRxImagenes.Any() || legacyEcoInformes.Any() || legacyEcoImagenes.Any())
+                                {
+                                    <div class="space-y-6">
+                                        @if (legacyRxInformes.Any() || legacyRxImagenes.Any())
+                                        {
+                                            <div>
+                                                <h5 class="text-sm font-bold text-gray-600 mb-2 uppercase tracking-wider">Rayos X</h5>
+                                                <div class="grid grid-cols-1 gap-3">
+                                                    @foreach (var informe in legacyRxInformes)
+                                                    {
+                                                        <a href="@Api.BuildPacienteEstudioFileUrl(informe.Id)" target="_blank" class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:border-turquesa-300 hover:shadow-sm transition-all group text-left">
+                                                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center mr-3">
+                                                                <i class="fa-solid fa-file-pdf"></i>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-semibold text-gray-700 truncate">@informe.NombreArchivo</p>
+                                                            </div>
+                                                        </a>
+                                                    }
+                                                    @foreach (var img in legacyRxImagenes)
+                                                    {
+                                                        <a href="@Api.BuildPacienteEstudioFileUrl(img.Id)" target="_blank" class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:border-turquesa-300 hover:shadow-sm transition-all group text-left">
+                                                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-3">
+                                                                <i class="fa-solid fa-image"></i>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-semibold text-gray-700 truncate">@img.NombreArchivo</p>
+                                                            </div>
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (legacyEcoInformes.Any() || legacyEcoImagenes.Any())
+                                        {
+                                            <div>
+                                                <h5 class="text-sm font-bold text-gray-600 mb-2 uppercase tracking-wider">Ecografías</h5>
+                                                <div class="grid grid-cols-1 gap-3">
+                                                    @foreach (var informe in legacyEcoInformes)
+                                                    {
+                                                        <a href="@Api.BuildPacienteEstudioFileUrl(informe.Id)" target="_blank" class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:border-turquesa-300 hover:shadow-sm transition-all group text-left">
+                                                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center mr-3">
+                                                                <i class="fa-solid fa-file-pdf"></i>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-semibold text-gray-700 truncate">@informe.NombreArchivo</p>
+                                                            </div>
+                                                        </a>
+                                                    }
+                                                    @foreach (var img in legacyEcoImagenes)
+                                                    {
+                                                        <a href="@Api.BuildPacienteEstudioFileUrl(img.Id)" target="_blank" class="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:border-turquesa-300 hover:shadow-sm transition-all group text-left">
+                                                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-3">
+                                                                <i class="fa-solid fa-image"></i>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-semibold text-gray-700 truncate">@img.NombreArchivo</p>
+                                                            </div>
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-gray-500 text-sm italic text-center py-4">No hay resultados de imágenes.</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private List<OdooCitaDto> citas = new();
+    
+    private PacientePdf? pacienteAntiguo;
+
+    private string miRuc = "";
+    private string miCedula = "";
+    private string miNombreCompleto = "";
+
+    // Para el modal Odoo
+    private bool mostrarModalOdoo = false;
+    private OdooCitaDto? citaSeleccionada;
+
+    // Para el modal Legacy
+    private bool mostrarModalLegacy = false;
+    private PacientePdf? pacienteLegacySeleccionado;
+    private bool isLoadingLegacyDetails = false;
+    private List<string> legacyPdfs = new();
+    
+    private List<PacienteEstudio> legacyRxInformes = new();
+    private List<PacienteEstudio> legacyRxImagenes = new();
+    private List<PacienteEstudio> legacyEcoInformes = new();
+    private List<PacienteEstudio> legacyEcoImagenes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await JS.InvokeAsync<string>("laboratorio.getToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            Nav.NavigateTo("/login", true);
+            return;
+        }
+
+        Api.SetToken(token);
+
+        try
+        {
+            var payload = token.Split('.')[1];
+            var payloadStr = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(payload)));
+            var payloadJson = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(payloadStr);
+            
+            if (payloadJson != null)
+            {
+                if (payloadJson.TryGetValue("Cedula", out var cVal)) miCedula = cVal?.ToString() ?? "";
+                if (payloadJson.TryGetValue("RUC", out var rVal)) miRuc = rVal?.ToString() ?? "";
+                if (payloadJson.TryGetValue("Nombre", out var nVal)) miNombreCompleto = nVal?.ToString() ?? "";
+            }
+
+            if (miRuc == "PARTICULAR") miRuc = "9999999999";
+        }
+        catch { }
+
+        await CargarDatos();
+    }
+
+    private string PadBase64(string base64)
+    {
+        base64 = base64.Replace('-', '+').Replace('_', '/');
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return base64;
+    }
+
+    private async Task CargarDatos()
+    {
+        isLoading = true;
+        citas.Clear();
+        pacienteAntiguo = null;
+
+        var taskOdoo = Api.GetMisResultadosExternosPacienteAsync(miRuc, miCedula);
+        
+        // El legacy carga todas las carpetas del RUC actual y nosotros lo filtramos.
+        // O si ya est configurado, slo busca en su nombre
+        var taskLegacy = Api.GetPacientesPorCarpetaAsync();
+
+        await Task.WhenAll(taskOdoo, taskLegacy);
+
+        citas = taskOdoo.Result ?? new();
+
+        var legacyAll = taskLegacy.Result ?? new();
+        // Filtrar slo al que coincida con mi nombre
+        pacienteAntiguo = legacyAll.FirstOrDefault(x => x.NombreCompleto != null && miNombreCompleto != null && x.NombreCompleto.Contains(miNombreCompleto, StringComparison.OrdinalIgnoreCase));
+
+        isLoading = false;
+    }
+
+    private void AbrirDetalleOdoo(OdooCitaDto cita)
+    {
+        citaSeleccionada = cita;
+        mostrarModalOdoo = true;
+    }
+
+    private void CerrarModalOdoo()
+    {
+        mostrarModalOdoo = false;
+        citaSeleccionada = null;
+    }
+
+    private async Task AbrirModalLegacy(PacientePdf paciente)
+    {
+        pacienteLegacySeleccionado = paciente;
+        mostrarModalLegacy = true;
+        isLoadingLegacyDetails = true;
+
+        
+        
+        var rxInfTask = Api.GetRxInformesPorNombreAsync(paciente.NombreCompleto);
+        var rxImgTask = Api.GetRxImagenesPorNombreAsync(paciente.NombreCompleto);
+        var ecoInfTask = Api.GetEcoInformesPorNombreAsync(paciente.NombreCompleto);
+        var ecoImgTask = Api.GetEcoImagenesPorNombreAsync(paciente.NombreCompleto);
+
+        await Task.WhenAll(rxInfTask, rxImgTask, ecoInfTask, ecoImgTask);
+
+        legacyRxInformes = rxInfTask.Result ?? new();
+        legacyRxImagenes = rxImgTask.Result ?? new();
+        legacyEcoInformes = ecoInfTask.Result ?? new();
+        legacyEcoImagenes = ecoImgTask.Result ?? new();
+
+        isLoadingLegacyDetails = false;
+    }
+
+    private void CerrarModalLegacy()
+    {
+        mostrarModalLegacy = false;
+        pacienteLegacySeleccionado = null;
+        legacyPdfs.Clear();
+        legacyRxInformes.Clear();
+        legacyRxImagenes.Clear();
+        legacyEcoInformes.Clear();
+        legacyEcoImagenes.Clear();
+    }
+
+    private async Task VerPdfAntiguo(string nombreArchivo)
+    {
+        var base64 = await Api.GetPdfBase64PorNombreAsync(nombreArchivo);
+        if (!string.IsNullOrEmpty(base64))
+        {
+            await JS.InvokeVoidAsync("openBase64Pdf", base64, nombreArchivo);
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "No se pudo cargar el documento.");
+        }
+    }
+}
+<PageTitle>Mis resultados | Centro Médico Klinic</PageTitle>
+
+
+
+
+
+

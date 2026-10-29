@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="description" content="Centro Médico Klinic: consulta externa por especialidad, citas del IESS, laboratorio, ecografía y farmacia. Consulta tus resultados en línea." />
+    <meta name="theme-color" content="#0d5c63" />
+    <!-- Sello de version: klinic.js lo compara con el del servidor para avisar que hay una version nueva. Subirlo en cada despliegue, junto con los ?v= -->
+    <meta name="klinic-version" content="20261028a" />
+    <title>Centro Médico Klinic</title>
+    <base href="/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/images/favicon.png" />
+    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', 
+            theme: {
+                extend: {
+                    colors: {
+                        // Los tonos 500-800 se oscurecieron para que el texto blanco sobre ellos cumpla contraste AA (4.5:1)
+                        turquesa: { 50: '#f0fdfc', 100: '#e6f7f6', 200: '#bce4e3', 300: '#7bcbc9', 400: '#5ab6b5', 500: '#167a70', 600: '#126b63', 700: '#0f6059', 800: '#0d5c5e', 900: '#0d5c63' },
+                        klinic: { magenta: '#c8175d', 'magenta-osc': '#a8124d', verde: '#1f8f84', 'verde-osc': '#167a70', claro: '#19c3a0', petroleo: '#0d5c63', tinta: '#0b2e33' },
+                        rojo: { 500: '#e63946', 700: '#c1121f' }
+                    },
+                    fontFamily: { sans: ['Inter', 'Poppins', 'Segoe UI', 'system-ui', 'sans-serif'] }
+                }
+            }
+        };
+
+        // Tema guardado: se aplica antes de pintar para evitar el parpadeo
+        (function () {
+            try {
+                var theme = localStorage.getItem('theme');
+                if (theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) { }
+        })();
+
+        // "Pausar animaciones" del pie: la preferencia guardada se aplica antes de pintar
+        (function () {
+            try {
+                if (localStorage.getItem('kl-quieto') === '1') document.documentElement.classList.add('kl-quieto');
+            } catch (e) { }
+        })();
+
+        window.toggleDarkMode = function () {
+            var isDark = document.documentElement.classList.toggle('dark');
+            try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) { }
+            return isDark;
+        };
+
+        window.isDarkMode = function () {
+            return document.documentElement.classList.contains('dark');
+        };
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+    <!-- El servidor cachea CSS/JS 4 horas: subir el ?v= en cada despliegue que cambie estos archivos -->
+    <link href="css/app.css?v=20261028a" rel="stylesheet" />
+    <link href="css/klinic.css?v=20261028a" rel="stylesheet" />
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
+</head>
+<body>
+        <div id="app">
+        <div class="fixed inset-0 bg-[#0d5c63] flex flex-col items-center justify-center text-white z-50">
+            <svg class="w-20 h-20 mb-6 animate-pulse" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="11" height="11" rx="3" fill="#e0306f"/><rect x="27" y="2" width="11" height="11" rx="3" fill="#e0306f"/><rect x="2" y="27" width="11" height="11" rx="3" fill="#e0306f"/><rect x="27" y="27" width="11" height="11" rx="3" fill="#e0306f"/><rect x="15" y="2" width="10" height="36" rx="3" fill="#19c3a0"/><rect x="2" y="15" width="36" height="10" rx="3" fill="#19c3a0"/></svg>
+            <h2 class="text-3xl font-extrabold mb-8">Klinic</h2>
+            <div class="w-64 bg-white/20 rounded-full h-2 mb-4">
+                <div class="bg-turquesa-400 h-2 rounded-full" style="width: var(--blazor-load-percentage, 0%)"></div>
+            </div>
+            <p class="text-turquesa-200 text-sm font-medium loading-text">Cargando sistema...</p>
+        </div>
+    </div>
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="js/laboratorio.js?v=20261028a"></script>
+    <script src="js/site.js?v=4"></script>
+    <script src="js/klinic.js?v=20261028a"></script>
+    <script>
+        window.abrirPdfDesdeBase64 = (base64, nombreArchivo) => {
+            const oldModal = document.getElementById('pdf-modal-container');
+            if(oldModal) oldModal.remove();
+            const modal = document.createElement('div');
+            modal.id = 'pdf-modal-container';
+            modal.className = 'fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 md:p-8 transition-opacity duration-300';
+            modal.innerHTML = `
+                <div class="bg-white w-full h-full md:w-11/12 md:h-full max-w-6xl rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                    <div class="flex justify-between items-center bg-[#0d5c63] text-white px-6 py-4">
+                        <h3 class="font-bold text-lg truncate pr-4"><i class="fa-solid fa-file-pdf mr-2"></i> <span id="pdf-modal-title"></span></h3>
+                        <div class="flex gap-4 items-center">
+                            <button id="pdf-modal-download" class="hover:text-turquesa-200 transition-colors flex items-center gap-2 text-sm font-semibold bg-white/20 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-download"></i> Descargar</button>
+                            <button onclick="document.getElementById('pdf-modal-container').remove()" class="hover:text-red-400 transition-colors ml-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full h-full bg-gray-200">
+                        <iframe class="w-full h-full border-0" src="data:application/pdf;base64,${base64}"></iframe>
+                    </div>
+                </div>
+            `;
+            modal.querySelector('#pdf-modal-title').textContent = nombreArchivo || 'Documento PDF';
+            modal.querySelector('#pdf-modal-download').onclick = () => window.descargarPdfDesdeBase64(base64, nombreArchivo || 'documento.pdf');
+            document.body.appendChild(modal);
+        };
+        window.descargarPdfDesdeBase64 = (base64, nombreArchivo) => {
+            const link = document.createElement('a');
+            link.href = 'data:application/pdf;base64,' + base64;
+            link.download = nombreArchivo || 'paciente.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+        window.triggerFileInputClick = (id) => {
+            const el = document.getElementById(id);
+            if (el) el.click();
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        window.cropperInstances = {};
+        window.initCropper = (imgId, aspectRatio) => {
+            const image = document.getElementById(imgId);
+            if (!image) return;
+            const startCropper = () => {
+                if (window.cropperInstances[imgId]) window.cropperInstances[imgId].destroy();
+                window.cropperInstances[imgId] = new Cropper(image, { aspectRatio: aspectRatio || 16 / 9, viewMode: 1 });
+            };
+            if (image.complete) startCropper(); else image.onload = startCropper;
+        };
+        window.getCroppedImage = (imgId) => {
+            const cropper = window.cropperInstances[imgId];
+            if (!cropper) return null;
+            return cropper.getCroppedCanvas({ width: 800, height: 400 }).toDataURL("image/jpeg");
+        };
+        window.destroyCropper = (imgId) => {
+            if (window.cropperInstances[imgId]) {
+                window.cropperInstances[imgId].destroy();
+                delete window.cropperInstances[imgId];
+            }
+        };
+        
+        window.showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container') || (() => {
+                const div = document.createElement('div');
+                div.id = 'toast-container';
+                div.className = 'fixed bottom-4 right-4 z-[999999] flex flex-col gap-2';
+                document.body.appendChild(div);
+                return div;
+            })();
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-500' : (type === 'error' ? 'bg-red-500' : 'bg-[#0d5c63]');
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+            toast.className = 'max-w-sm w-full shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden ' + bg + ' text-white transform transition-all duration-300 translate-y-10 opacity-0';
+            toast.innerHTML = `
+                <div class="p-4 flex items-center">
+                    <i class="fa-solid ${icon} text-xl mr-3"></i>
+                    <p class="text-sm font-medium"></p>
+                </div>
+            `;
+            toast.querySelector('p').textContent = message;
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+    </script>
+    <script>
+        // Blazor arranca al final: todos los helpers JS ya estan definidos antes del primer JS Interop.
+        Blazor.start({
+            loadBootResource: function (type, name, defaultUri, integrity) {
+                const url = defaultUri + '?v=' + Date.now();
+                if (type === 'dotnetjs') return url;
+                return fetch(url, { cache: 'no-cache', integrity: '' });
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
