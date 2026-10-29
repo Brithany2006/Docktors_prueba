@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "LaboratorioFront",
   "resources": {
-    "hash": "sha256-mO4wLd5QSrca2cmDkPfOxUwivt09U1ZZyWV6Uw1/zqg=",
+    "hash": "sha256-gDg2KyLOriCkLflEHBUeS5Wx+FvaWW4lQUjc0rQ6kpM=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-9NoXeVUo4WNrEqrjAp/y3Yc8NmDcymQkzMGOIbIpGio="
     },
@@ -222,10 +222,10 @@
       "mscorlib.dll": "sha256-GjNyKO8FZR4A+4llBFsQQ7ARO1VvnqjoTlL3+XU1gb4=",
       "netstandard.dll": "sha256-Ytl7RjStaIwk2p05eUvWl7SR1sgsrT2Ip3FEGvxz7uk=",
       "System.Private.CoreLib.dll": "sha256-24FzbjfeIVJZMA7kGeLE9CcvICxhZ9p0csBc3fJXArk=",
-      "LaboratorioFront.dll": "sha256-ogujcz+hxR5rGlFCuXzc1EJowXSt2hWybr/ZwPyGbLo="
+      "LaboratorioFront.dll": "sha256-fsoatazdtaGV/Fr+beGwGTDK4BA6j+DN+pzuWRMvkgg="
     },
     "pdb": {
-      "LaboratorioFront.pdb": "sha256-kixsFXUEfgOEuSC9F5krfsQOp3hi61/XGub0KZruhV4="
+      "LaboratorioFront.pdb": "sha256-NXbSni/RNf/gvCCmkHc21c+aVRvWI/Kwy9x+dmLyQ+s="
     }
   },
   "debugLevel": -1,

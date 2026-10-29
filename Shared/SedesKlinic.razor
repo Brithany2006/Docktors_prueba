@@ -5,10 +5,6 @@
         <article class="@(Claro ? "kl-sede-light" : "kl-sede") kl-reveal">
             <h3><span class="kl-pin" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>@s.Nombre</h3>
             <p>@s.Direccion</p>
-            @if (ConMapa)
-            {
-                <p><span class="kl-pendiente">Horario de atención: por confirmar</span></p>
-            }
             <div class="kl-sede-actions">
                 <a class="kl-btn kl-btn-w kl-btn-sm" href="@s.WhatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp<span class="kl-sr"> (se abre en una pestaña nueva)</span></a>
                 <a class="kl-btn kl-btn-o kl-btn-sm" href="@s.MapaUrl" target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right" aria-hidden="true"></i> Cómo llegar<span class="kl-sr"> a @s.Nombre (se abre en una pestaña nueva)</span></a>

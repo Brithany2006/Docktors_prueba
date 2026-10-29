@@ -891,6 +891,12 @@ C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\ne
 C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\refint\LaboratorioFront.dll
 C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\LaboratorioFront.pdb
 C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\ref\LaboratorioFront.dll
-C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\compressed\wf6iwc5mih-{0}-aqr9bn3516-aqr9bn3516.gz
-C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\compressed\m5vyu78ubw-{0}-qhr1mbrgrh-qhr1mbrgrh.gz
-C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\compressed\e4wyatun2b-{0}-igccws59wj-igccws59wj.gz
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\LaboratorioFront.sourcelink.json
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\bin\Debug\net8.0\api\appsettings.json
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\bin\Debug\net8.0\api\dotnet-tools.json
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\bin\Debug\net8.0\api\LaboratorioApi.deps.json
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\bin\Debug\net8.0\api\LaboratorioApi.runtimeconfig.json
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\bin\Debug\net8.0\api\LaboratorioApi.staticwebassets.endpoints.json
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\compressed\wf6iwc5mih-{0}-aql6ulrm8m-aql6ulrm8m.gz
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\compressed\m5vyu78ubw-{0}-rkeclw8m8n-rkeclw8m8n.gz
+C:\Users\Admin\Documents\Docktors_nueva\Doktors_Practica-main\front\obj\Debug\net8.0\compressed\e4wyatun2b-{0}-jjoyopqm5w-jjoyopqm5w.gz
